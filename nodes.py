@@ -124,3 +124,35 @@ class AreaCropRestoreNode:
             restored_images.append(target)
         
         return (torch.stack(restored_images),)
+
+
+
+class ImageReverseOrderNode:
+    """图像顺序倒置节点 - 将输入图像批量的顺序完全反转"""
+    
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "images": ("IMAGE",),  # 输入图像批量
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("reversed_images",)
+    FUNCTION = "reverse_order"
+    CATEGORY = "image"
+
+    def reverse_order(self, images):
+        """
+        将输入图像张量的顺序完全反转
+        
+        参数:
+            images: 输入图像张量，形状为 (B, H, W, C)
+            
+        返回:
+            反转顺序后的图像张量，形状不变但顺序反转
+        """
+        # 使用PyTorch的flip函数沿批次维度反转顺序
+        reversed_images = torch.flip(images, [0])
+        return (reversed_images,)

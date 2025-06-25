@@ -6,7 +6,6 @@ from torchvision.transforms.functional import resize as torch_resize
 from torch.nn.functional import interpolate
 
 class ImageAreaCropNode:
-    """图像区域裁切节点 - 优化版 (批量处理+GPU加速)"""
     
     @classmethod
     def INPUT_TYPES(s):
@@ -72,7 +71,6 @@ class ImageAreaCropNode:
 
 
 class AreaCropRestoreNode:
-    """区域裁切恢复节点 - 优化版 (批量处理+GPU加速)"""
     
     @classmethod
     def INPUT_TYPES(s):
@@ -99,13 +97,11 @@ class AreaCropRestoreNode:
         if not isinstance(crop_info, list):
             crop_info = [crop_info] * B
         
-        # 为批量处理准备坐标
+        # 为批量处理准备坐标和尺寸
         x_coords = []
         y_coords = []
-        widths = []
-        heights = []
-        resize_flags = []
-        scaled_sizes = []
+        target_heights = []
+        target_widths = []
         
         for i in range(B):
             info = crop_info[i] if i < len(crop_info) else crop_info[0]
@@ -120,68 +116,73 @@ class AreaCropRestoreNode:
             
             x_coords.append(x)
             y_coords.append(y)
-            widths.append(w)
-            heights.append(h)
-            resize_flags.append(info.get("do_resize", False))
-            scaled_sizes.append(info.get("scaled_size"))
+            target_widths.append(w)
+            target_heights.append(h)
         
-        # 批量处理需要resize的图像
-        resize_indices = [i for i, flag in enumerate(resize_flags) if flag]
-        if resize_indices:
-            # 提取需要resize的图像
-            to_resize = cropped_image[resize_indices]
-            
-            # 获取对应的目标尺寸
-            target_sizes = [(heights[i], widths[i]) for i in resize_indices]
-            
-            # 找出所有不同尺寸的组
-            unique_sizes = set(target_sizes)
-            
-            # 按尺寸分组处理
-            for size in unique_sizes:
-                # 找到当前尺寸对应的索引
-                group_indices = [i for i, s in zip(resize_indices, target_sizes) if s == size]
-                
-                # 批量resize
-                resized_group = to_resize[group_indices]
-                resized_group = resized_group.permute(0, 3, 1, 2)
-                resized_group = interpolate(
-                    resized_group, 
-                    size=size, 
-                    mode='bilinear', 
-                    align_corners=False
-                )
-                resized_group = resized_group.permute(0, 2, 3, 1)
-                
-                # 更新需要resize的图像
-                to_resize[group_indices] = resized_group
-            
-            # 更新原始图像
-            cropped_image[resize_indices] = to_resize
+        # 创建一个列表来存储调整后的裁剪图像
+        resized_crops = []
         
-        # 批量替换图像区域
+        # 分组处理相同尺寸的图像以提高效率
+        size_groups = {}
         for i in range(B):
-            # 最终尺寸检查
-            current_height, current_width = cropped_image[i].shape[:2]
-            target_height, target_width = heights[i], widths[i]
+            size_key = (target_heights[i], target_widths[i])
+            if size_key not in size_groups:
+                size_groups[size_key] = []
+            size_groups[size_key].append(i)
+        
+        # 按尺寸组处理
+        for (target_h, target_w), indices in size_groups.items():
+            # 获取该组的所有裁剪图像
+            group_crops = cropped_image[indices]
             
-            if current_height != target_height or current_width != target_width:
-                # 使用批量操作进行最终调整
-                cropped_i = cropped_image[i:i+1].permute(0, 3, 1, 2)
-                cropped_i = interpolate(
-                    cropped_i, 
-                    size=(target_height, target_width), 
-                    mode='bilinear', 
+            # 检查是否需要调整尺寸
+            if group_crops.shape[1] != target_h or group_crops.shape[2] != target_w:
+                # 调整维度顺序 (B, H, W, C) -> (B, C, H, W)
+                group_crops = group_crops.permute(0, 3, 1, 2)
+                
+                # 批量调整到目标尺寸
+                resized_group = interpolate(
+                    group_crops,
+                    size=(target_h, target_w),
+                    mode='bilinear',
                     align_corners=False
                 )
-                cropped_image[i] = cropped_i.permute(0, 2, 3, 1)[0]
+                
+                # 恢复维度顺序 (B, C, H, W) -> (B, H, W, C)
+                resized_group = resized_group.permute(0, 2, 3, 1)
+            else:
+                resized_group = group_crops
+            
+            # 存储调整后的图像
+            for i, idx in enumerate(indices):
+                resized_crops.append((idx, resized_group[i]))
+        
+        # 按原始索引排序
+        resized_crops.sort(key=lambda x: x[0])
+        resized_crops = [crop for _, crop in resized_crops]
+        
+        # 将图像贴回目标位置
+        for i in range(B):
+            # 获取当前裁剪图像
+            current_crop = resized_crops[i]
+            
+            # 确保尺寸匹配
+            if current_crop.shape[0] != target_heights[i] or current_crop.shape[1] != target_widths[i]:
+                # 如果尺寸仍不匹配，强制调整
+                current_crop = current_crop.permute(2, 0, 1).unsqueeze(0)
+                current_crop = interpolate(
+                    current_crop,
+                    size=(target_heights[i], target_widths[i]),
+                    mode='bilinear',
+                    align_corners=False
+                )
+                current_crop = current_crop.squeeze(0).permute(1, 2, 0)
             
             # 替换目标图像中的区域
-            restored[i, y_coords[i]:y_coords[i]+heights[i], 
-                    x_coords[i]:x_coords[i]+widths[i], :] = cropped_image[i]
+            restored[i, y_coords[i]:y_coords[i]+target_heights[i], 
+                    x_coords[i]:x_coords[i]+target_widths[i], :] = current_crop
         
         return (restored,)
-    
 
 
 class ImageReverseOrderNode:
@@ -216,7 +217,7 @@ class ImageReverseOrderNode:
         if not loop:
             return (images.flip([0]) if reverse else images,)
         
-        # 预计算索引 - 避免重复创建张量
+        # 预计算索引
         # 创建完整正序和倒序索引
         forward_indices = torch.arange(n, device=device)
         backward_indices = torch.flip(forward_indices, [0])
@@ -226,33 +227,27 @@ class ImageReverseOrderNode:
         dedup_backward = backward_indices[:-1] if deduplicate and n > 1 else backward_indices
         
         # 确定序列构建方向
-        start_segment = dedup_backward if reverse else dedup_forward
-        end_segment = forward_indices if reverse else backward_indices
+        segments = []
         
-        # 计算中间段数量
-        mid_segment_count = loop_count - 1
+        # 添加起始段
+        if reverse:
+            segments.append(backward_indices)
+        else:
+            segments.append(forward_indices)
         
-        # 使用张量连接代替列表拼接
-        segments = [start_segment]
-        
-        # 中间段处理 - 使用张量操作替代循环
-        if mid_segment_count > 0:
-            # 创建中间段张量
-            mid_segments = []
+        # 添加循环段
+        for i in range(loop_count):
+            # 添加相反方向的段
+            if reverse:
+                segments.append(dedup_forward)
+            else:
+                segments.append(dedup_backward)
             
-            # 交替添加正序和倒序索引
-            for i in range(mid_segment_count):
-                if (i % 2 == 0) ^ reverse:  # 使用异或简化条件
-                    mid_segments.append(dedup_backward)
-                else:
-                    mid_segments.append(dedup_forward)
-            
-            # 批量合并中间段
-            mid_tensor = torch.cat(mid_segments)
-            segments.append(mid_tensor)
-        
-        # 添加结束段
-        segments.append(end_segment)
+            # 添加相同方向的段
+            if reverse:
+                segments.append(dedup_backward)
+            else:
+                segments.append(dedup_forward)
         
         # 合并所有段
         combined_indices = torch.cat(segments)

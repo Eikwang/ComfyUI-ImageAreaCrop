@@ -1,6 +1,7 @@
 # ComfyUI-ImageAreaCrop
 
 这是一个用于ComfyUI的图像区域裁剪插件，支持精确裁剪和恢复功能。
+新增音频分割和时长转帧数节点。可以和循环工作流结合,制作数字人视频
 
 ## 功能特点
 - 精确控制裁剪区域（X=横向移动，Y=纵向移动，Width=宽度，Height=高度）
@@ -26,3 +27,27 @@ ImageReverseOrderNode (图像序列处理节点)
 ​功能​：
 
 对图像序列进行顺序处理（反转、循环）
+reverse 控制是否反转顺序
+loop 控制是否循环处理
+loop_count 控制循环次数
+dedup 控制是否删除首尾的重复祯
+
+ImageTransferNode(图像中转):
+正常使用​：
+连接图像到 image 输入，节点会缓存并输出图像
+禁用上游节点后，节点会继续输出最后一次缓存的图像而无需断开连接
+​手动图像处理​：
+manual_image 输入可用于临时添加图像
+merge_manual 控制是否将手动图像合并到缓存中
+merge_index 控制合并的位置
+​
+
+AudioSegmenterNode (音频分割节点)
+​功能​：
+
+将音频文件分割成多个片段
+支持自定义片段长度和数量
+输出分割后的音频片段
+
+AudioDurationToFramesNode (音频时长转帧数节点)
+将音频时长转换为帧数的整数表示

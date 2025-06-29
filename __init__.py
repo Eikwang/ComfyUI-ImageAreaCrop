@@ -1,13 +1,26 @@
-from .nodes import ImageAreaCropNode, AreaCropRestoreNode, ImageReverseOrderNode
+from .nodes import (
+    ImageAreaCropNode, 
+    AreaCropRestoreNode, 
+    ImageReverseOrderNode, 
+    ImageTransferNode, 
+    AudioSplitNode, 
+    AudioDurationToFrames, 
+)
 
 NODE_CLASS_MAPPINGS = {
     "ImageAreaCropNode": ImageAreaCropNode,
     "AreaCropRestoreNode": AreaCropRestoreNode,
-    "ImageReverseOrderNode": ImageReverseOrderNode
+    "ImageReverseOrderNode": ImageReverseOrderNode,
+    "ImageTransferNode": ImageTransferNode,
+    "AudioSplitNode": AudioSplitNode,
+    "AudioDurationToFrames": AudioDurationToFrames,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ImageAreaCropNode": "图像区域裁切",
     "AreaCropRestoreNode": "区域裁切恢复",
-    "ImageReverseOrderNode": "图像倒序"
+    "ImageReverseOrderNode": "图像倒序循环",
+    "ImageTransferNode": "图像中转传输",
+    "AudioSplitNode": "音频分割",
+    "AudioDurationToFrames": "音频转祯数",
 }

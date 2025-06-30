@@ -5,6 +5,8 @@ from .nodes import (
     ImageTransferNode, 
     AudioSplitNode, 
     AudioDurationToFrames, 
+    AudioSpeechSegmenter,
+    AudioSegmentProcessor,
 )
 
 NODE_CLASS_MAPPINGS = {
@@ -14,6 +16,8 @@ NODE_CLASS_MAPPINGS = {
     "ImageTransferNode": ImageTransferNode,
     "AudioSplitNode": AudioSplitNode,
     "AudioDurationToFrames": AudioDurationToFrames,
+    "AudioSpeechSegmenter": AudioSpeechSegmenter,
+    "AudioSegmentProcessor": AudioSegmentProcessor,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -23,4 +27,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ImageTransferNode": "图像中转传输",
     "AudioSplitNode": "音频分割",
     "AudioDurationToFrames": "音频转祯数",
+    "AudioSpeechSegmenter": "音频语音分段",
+    "AudioSegmentProcessor": "音频分段中转",
 }

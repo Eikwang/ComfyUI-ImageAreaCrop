@@ -498,7 +498,7 @@ class AudioSpeechSegmenter:
             "required": {
                 "audio": ("AUDIO",),                # 输入音频
                 "frame_duration": ("INT", {"default": 20, "min": 10, "max": 30, "step": 10}),  # VAD帧时长(ms)
-                "min_speech_duration": ("FLOAT", {"default": 0.5, "min": 0.1, "max": 5.0, "step": 0.1}),  # 最小语音时长(s)
+                "min_speech_duration": ("FLOAT", {"default": 1, "min": 0.1, "max": 5.0, "step": 0.1}),  # 最小语音时长(s)
                 "max_silence_duration": ("FLOAT", {"default": 0.5, "min": 0.1, "max": 2.0, "step": 0.1}),  # 最大静音时长(s)
                 "aggressiveness": ("INT", {"default": 2, "min": 1, "max": 3, "step": 1}),  # VAD攻击性级别
                 "max_segment_duration": ("FLOAT", {"default": 10.0, "min": 1.0, "max": 60.0, "step": 1.0}),  # 最大片段时长(s)

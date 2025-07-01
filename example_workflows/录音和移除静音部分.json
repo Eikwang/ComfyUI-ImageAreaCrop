@@ -1,0 +1,1351 @@
+{
+  "id": "487d5b37-5b6c-4f94-9b25-3836d48d96f8",
+  "revision": 0,
+  "last_node_id": 44,
+  "last_link_id": 46,
+  "nodes": [
+    {
+      "id": 7,
+      "type": "AudioSeparation",
+      "pos": [
+        400,
+        -150
+      ],
+      "size": [
+        270,
+        166
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "label": "Bass",
+          "name": "Bass",
+          "type": "AUDIO",
+          "links": [
+            6
+          ]
+        },
+        {
+          "label": "Drums",
+          "name": "Drums",
+          "type": "AUDIO",
+          "links": [
+            7
+          ]
+        },
+        {
+          "label": "Other",
+          "name": "Other",
+          "type": "AUDIO",
+          "links": [
+            8
+          ]
+        },
+        {
+          "label": "Vocals",
+          "name": "Vocals",
+          "type": "AUDIO",
+          "links": [
+            9,
+            31
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "audio-separation-nodes-comfyui",
+        "ver": "31a4567726e035097cc2d1f767767908a6fda2ea",
+        "Node name for S&R": "AudioSeparation",
+        "widget_ue_connectable": {},
+        "ttNbgOverride": {
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b",
+          "color": "#323"
+        }
+      },
+      "widgets_values": [
+        "linear",
+        60,
+        0.1
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 8,
+      "type": "LoadAudio",
+      "pos": [
+        -110,
+        310
+      ],
+      "size": [
+        270,
+        136
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "label": "音频",
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            4,
+            27
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "LoadAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "拯救-孙楠.320.mp3",
+        null,
+        null
+      ]
+    },
+    {
+      "id": 9,
+      "type": "PreviewAudio",
+      "pos": [
+        830,
+        -340
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 6
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 10,
+      "type": "PreviewAudio",
+      "pos": [
+        1160,
+        -220
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 7
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 11,
+      "type": "PreviewAudio",
+      "pos": [
+        1170,
+        -80
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 8
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 12,
+      "type": "PreviewAudio",
+      "pos": [
+        770,
+        -90
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 9
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 16,
+      "type": "UVR5_Node",
+      "pos": [
+        430,
+        450
+      ],
+      "size": [
+        270,
+        126
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 27
+        }
+      ],
+      "outputs": [
+        {
+          "label": "vocal_audio",
+          "name": "vocal_audio",
+          "type": "AUDIO",
+          "links": [
+            19,
+            21,
+            34
+          ]
+        },
+        {
+          "label": "bgm_audio",
+          "name": "bgm_audio",
+          "type": "AUDIO",
+          "links": [
+            20
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-UVR5",
+        "ver": "d3b7255e6f0cc43c198b265931384fe96bf329f4",
+        "Node name for S&R": "UVR5_Node",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "HP5-主旋律人声vocals+其他instrumentals.pth",
+        10,
+        "wav"
+      ]
+    },
+    {
+      "id": 23,
+      "type": "PreviewAudio",
+      "pos": [
+        920,
+        390
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 19
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 24,
+      "type": "PreviewAudio",
+      "pos": [
+        920,
+        530
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 20
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 25,
+      "type": "UVR5_Node",
+      "pos": [
+        440,
+        660
+      ],
+      "size": [
+        270,
+        126
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 21
+        }
+      ],
+      "outputs": [
+        {
+          "label": "vocal_audio",
+          "name": "vocal_audio",
+          "type": "AUDIO",
+          "links": [
+            22
+          ]
+        },
+        {
+          "label": "bgm_audio",
+          "name": "bgm_audio",
+          "type": "AUDIO",
+          "links": [
+            23
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-UVR5",
+        "ver": "d3b7255e6f0cc43c198b265931384fe96bf329f4",
+        "Node name for S&R": "UVR5_Node",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "VR-DeEchoAggressive.pth",
+        10,
+        "wav"
+      ]
+    },
+    {
+      "id": 26,
+      "type": "PreviewAudio",
+      "pos": [
+        930,
+        680
+      ],
+      "size": [
+        360,
+        90
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 22
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 27,
+      "type": "PreviewAudio",
+      "pos": [
+        940,
+        840
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 23
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 28,
+      "type": "PreviewAudio",
+      "pos": [
+        2230,
+        -320
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 28
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 29,
+      "type": "UVR5_Node",
+      "pos": [
+        1740,
+        -420
+      ],
+      "size": [
+        270,
+        126
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 31
+        }
+      ],
+      "outputs": [
+        {
+          "label": "vocal_audio",
+          "name": "vocal_audio",
+          "type": "AUDIO",
+          "links": [
+            30,
+            38
+          ]
+        },
+        {
+          "label": "bgm_audio",
+          "name": "bgm_audio",
+          "type": "AUDIO",
+          "links": [
+            28
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-UVR5",
+        "ver": "d3b7255e6f0cc43c198b265931384fe96bf329f4",
+        "Node name for S&R": "UVR5_Node",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "HP5-主旋律人声vocals+其他instrumentals.pth",
+        10,
+        "wav"
+      ]
+    },
+    {
+      "id": 30,
+      "type": "PreviewAudio",
+      "pos": [
+        2240,
+        -500
+      ],
+      "size": [
+        280,
+        100
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 30
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 31,
+      "type": "PreviewAudio",
+      "pos": [
+        1770,
+        460
+      ],
+      "size": [
+        270,
+        88
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 32
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 32,
+      "type": "AudioSeparation",
+      "pos": [
+        1420,
+        460
+      ],
+      "size": [
+        270,
+        166
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 34
+        }
+      ],
+      "outputs": [
+        {
+          "label": "Bass",
+          "name": "Bass",
+          "type": "AUDIO",
+          "links": []
+        },
+        {
+          "label": "Drums",
+          "name": "Drums",
+          "type": "AUDIO",
+          "links": []
+        },
+        {
+          "label": "Other",
+          "name": "Other",
+          "type": "AUDIO",
+          "links": []
+        },
+        {
+          "label": "Vocals",
+          "name": "Vocals",
+          "type": "AUDIO",
+          "links": [
+            32,
+            36
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "audio-separation-nodes-comfyui",
+        "ver": "31a4567726e035097cc2d1f767767908a6fda2ea",
+        "Node name for S&R": "AudioSeparation",
+        "widget_ue_connectable": {},
+        "ttNbgOverride": {
+          "bgcolor": "#535",
+          "groupcolor": "#a1309b",
+          "color": "#323"
+        }
+      },
+      "widgets_values": [
+        "linear",
+        60,
+        0.1
+      ],
+      "color": "#323",
+      "bgcolor": "#535"
+    },
+    {
+      "id": 33,
+      "type": "UVR5_Node",
+      "pos": [
+        2160,
+        450
+      ],
+      "size": [
+        270,
+        126
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 36
+        }
+      ],
+      "outputs": [
+        {
+          "label": "vocal_audio",
+          "name": "vocal_audio",
+          "type": "AUDIO",
+          "links": [
+            35,
+            39,
+            46
+          ]
+        },
+        {
+          "label": "bgm_audio",
+          "name": "bgm_audio",
+          "type": "AUDIO",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-UVR5",
+        "ver": "d3b7255e6f0cc43c198b265931384fe96bf329f4",
+        "Node name for S&R": "UVR5_Node",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "VR-DeEchoAggressive.pth",
+        10,
+        "wav"
+      ]
+    },
+    {
+      "id": 34,
+      "type": "PreviewAudio",
+      "pos": [
+        2630,
+        450
+      ],
+      "size": [
+        360,
+        90
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 35
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 35,
+      "type": "UVR5_Node",
+      "pos": [
+        1760,
+        -170
+      ],
+      "size": [
+        270,
+        126
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 38
+        }
+      ],
+      "outputs": [
+        {
+          "label": "vocal_audio",
+          "name": "vocal_audio",
+          "type": "AUDIO",
+          "links": [
+            37
+          ]
+        },
+        {
+          "label": "bgm_audio",
+          "name": "bgm_audio",
+          "type": "AUDIO",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyUI-UVR5",
+        "ver": "d3b7255e6f0cc43c198b265931384fe96bf329f4",
+        "Node name for S&R": "UVR5_Node",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "VR-DeEchoAggressive.pth",
+        10,
+        "wav"
+      ]
+    },
+    {
+      "id": 36,
+      "type": "PreviewAudio",
+      "pos": [
+        2250,
+        -150
+      ],
+      "size": [
+        360,
+        90
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 37
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 39,
+      "type": "RemoveSilence",
+      "pos": [
+        2470,
+        790
+      ],
+      "size": [
+        282.53515625,
+        106
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 39
+        }
+      ],
+      "outputs": [
+        {
+          "label": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            40
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "audiotools",
+        "ver": "b05ed6dbc2a2eb19a757d6a6d21b53ebf1558b18",
+        "Node name for S&R": "RemoveSilence",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        0.3,
+        0.5,
+        true
+      ]
+    },
+    {
+      "id": 40,
+      "type": "PreviewAudio",
+      "pos": [
+        2850,
+        770
+      ],
+      "size": [
+        360,
+        90
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 40
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 41,
+      "type": "AudioSegmentProcessor",
+      "pos": [
+        2530,
+        1060
+      ],
+      "size": [
+        270,
+        150
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "audio_list",
+          "name": "audio_list",
+          "type": "AUDIO_LIST",
+          "link": 41
+        },
+        {
+          "label": "segment_info",
+          "name": "segment_info",
+          "type": "JSON",
+          "link": 42
+        }
+      ],
+      "outputs": [
+        {
+          "label": "output_audio",
+          "name": "output_audio",
+          "type": "AUDIO",
+          "links": [
+            44
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "Eikwang/ComfyUI-ImageAreaCrop",
+        "ver": "6fab64e51dd35e13080944e390d64f74e3d5829e",
+        "Node name for S&R": "AudioSegmentProcessor",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        true,
+        false,
+        30,
+        "segments/ComfyUI"
+      ]
+    },
+    {
+      "id": 42,
+      "type": "AudioSpeechSegmenter",
+      "pos": [
+        2130,
+        1060
+      ],
+      "size": [
+        289.408203125,
+        338
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 46
+        }
+      ],
+      "outputs": [
+        {
+          "label": "segments",
+          "name": "segments",
+          "type": "AUDIO_LIST",
+          "links": [
+            41
+          ]
+        },
+        {
+          "label": "segment_info",
+          "name": "segment_info",
+          "type": "JSON",
+          "links": [
+            42
+          ]
+        },
+        {
+          "label": "segment_count",
+          "name": "segment_count",
+          "type": "INT",
+          "links": [
+            45
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "Eikwang/ComfyUI-ImageAreaCrop",
+        "ver": "6fab64e51dd35e13080944e390d64f74e3d5829e",
+        "Node name for S&R": "AudioSpeechSegmenter",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        20,
+        1,
+        1,
+        2,
+        10,
+        0.05,
+        -40,
+        false,
+        false,
+        16000,
+        false
+      ]
+    },
+    {
+      "id": 43,
+      "type": "PreviewAudio",
+      "pos": [
+        3010,
+        1090
+      ],
+      "size": [
+        450,
+        190
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 44
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.42",
+        "Node name for S&R": "PreviewAudio",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 44,
+      "type": "Display Int (rgthree)",
+      "pos": [
+        2540,
+        1270
+      ],
+      "size": [
+        210,
+        88
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "input",
+          "type": "INT",
+          "link": 45
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "f754c4765849aa748abb35a1f030a5ed6474a69b",
+        "Node name for S&R": "Display Int (rgthree)",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        ""
+      ]
+    }
+  ],
+  "links": [
+    [
+      4,
+      8,
+      0,
+      7,
+      0,
+      "AUDIO"
+    ],
+    [
+      6,
+      7,
+      0,
+      9,
+      0,
+      "AUDIO"
+    ],
+    [
+      7,
+      7,
+      1,
+      10,
+      0,
+      "AUDIO"
+    ],
+    [
+      8,
+      7,
+      2,
+      11,
+      0,
+      "AUDIO"
+    ],
+    [
+      9,
+      7,
+      3,
+      12,
+      0,
+      "AUDIO"
+    ],
+    [
+      19,
+      16,
+      0,
+      23,
+      0,
+      "AUDIO"
+    ],
+    [
+      20,
+      16,
+      1,
+      24,
+      0,
+      "AUDIO"
+    ],
+    [
+      21,
+      16,
+      0,
+      25,
+      0,
+      "AUDIO"
+    ],
+    [
+      22,
+      25,
+      0,
+      26,
+      0,
+      "AUDIO"
+    ],
+    [
+      23,
+      25,
+      1,
+      27,
+      0,
+      "AUDIO"
+    ],
+    [
+      27,
+      8,
+      0,
+      16,
+      0,
+      "AUDIO"
+    ],
+    [
+      28,
+      29,
+      1,
+      28,
+      0,
+      "AUDIO"
+    ],
+    [
+      30,
+      29,
+      0,
+      30,
+      0,
+      "AUDIO"
+    ],
+    [
+      31,
+      7,
+      3,
+      29,
+      0,
+      "AUDIO"
+    ],
+    [
+      32,
+      32,
+      3,
+      31,
+      0,
+      "AUDIO"
+    ],
+    [
+      34,
+      16,
+      0,
+      32,
+      0,
+      "AUDIO"
+    ],
+    [
+      35,
+      33,
+      0,
+      34,
+      0,
+      "AUDIO"
+    ],
+    [
+      36,
+      32,
+      3,
+      33,
+      0,
+      "AUDIO"
+    ],
+    [
+      37,
+      35,
+      0,
+      36,
+      0,
+      "AUDIO"
+    ],
+    [
+      38,
+      29,
+      0,
+      35,
+      0,
+      "AUDIO"
+    ],
+    [
+      39,
+      33,
+      0,
+      39,
+      0,
+      "AUDIO"
+    ],
+    [
+      40,
+      39,
+      0,
+      40,
+      0,
+      "AUDIO"
+    ],
+    [
+      41,
+      42,
+      0,
+      41,
+      0,
+      "AUDIO_LIST"
+    ],
+    [
+      42,
+      42,
+      1,
+      41,
+      1,
+      "JSON"
+    ],
+    [
+      44,
+      41,
+      0,
+      43,
+      0,
+      "AUDIO"
+    ],
+    [
+      45,
+      42,
+      2,
+      44,
+      0,
+      "INT"
+    ],
+    [
+      46,
+      33,
+      0,
+      42,
+      0,
+      "AUDIO"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.23092115320381967,
+      "offset": [
+        2180.958802592563,
+        1749.8091860518705
+      ]
+    },
+    "ue_links": [],
+    "links_added_by_ue": [],
+    "frontendVersion": "1.23.4",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": false,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

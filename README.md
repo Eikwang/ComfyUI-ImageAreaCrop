@@ -65,6 +65,7 @@ AudioSpeechSegmenter (音频语音分割节点)
 - aggresive: 检测敏感度（1-3）
 - max_segments_duration: 最大分段时长(s)
 - min_energy_threshold: 最小能量阈值（0.000-0.100）调整建议：安静语音：0.005 ~ 0.01,嘈杂环境：0.02 ~ 0.05
+- noise_level: 噪音水平,-30至-60.低于此设定值判定为噪音
 - noise_suppression: 是否启用噪声抑制（可选，默认为True）
 - resample: 重采样（默认为16000）
 - debug_output: 是否输出调试信息（可选，默认为False）

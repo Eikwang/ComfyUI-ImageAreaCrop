@@ -18,8 +18,6 @@ from pydub import AudioSegment
 import audioop
 import tempfile
 from comfy import model_management
-import audioop
-import tempfile
 import torchaudio
 from torchaudio.transforms import Fade
 
@@ -30,8 +28,10 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("AudioSpeechSegmenter")
 import comfy.utils
 from typing import List, Dict, Tuple, Optional
+import ffmpeg
+import hashlib
 
-
+from tqdm import tqdm
 
 class ImageAreaCropNode:
     
@@ -504,8 +504,10 @@ class AudioSpeechSegmenter:
                 "max_segment_duration": ("FLOAT", {"default": 10.0, "min": 1.0, "max": 60.0, "step": 1.0}),  # 最大片段时长(s)
             },
             "optional": {
-                "min_energy_threshold": ("FLOAT", {"default": 0.01, "min": 0.001, "max": 0.1, "step": 0.001}),  # 最小能量阈值
+                "min_energy_threshold": ("FLOAT", {"default": 0.01, "min": 0.001, "max": 0.5, "step": 0.001}),  # 最小能量阈值
+                "noise_level_db": ("FLOAT", {"default": -60, "min": -90, "max": -30, "step": 1}),  # 噪音水平阈值(dB)
                 "noise_reduction": ("BOOLEAN", {"default": True}),  # 噪声抑制开关
+                "adaptive_threshold": ("BOOLEAN", {"default": True}),  # 自适应阈值开关
                 "resample_rate": ("INT", {"default": 16000, "min": 8000, "max": 48000, "step": 1000}),  # 重采样率
                 "debug_output": ("BOOLEAN", {"default": False}),  # 调试输出开关
             }
@@ -518,7 +520,8 @@ class AudioSpeechSegmenter:
     
     def segment_audio(self, audio, frame_duration, min_speech_duration, max_silence_duration, 
                      aggressiveness, max_segment_duration, min_energy_threshold=0.01, 
-                     noise_reduction=True, resample_rate=16000, debug_output=False):
+                     noise_level_db=-60, noise_reduction=True, adaptive_threshold=True,
+                     resample_rate=16000, debug_output=False):
         """音频语音分割主方法"""
         # 输入验证
         if "waveform" not in audio or "sample_rate" not in audio:
@@ -572,16 +575,22 @@ class AudioSpeechSegmenter:
             
             # 应用噪声抑制（可选）
             if noise_reduction:
-                logger.info("应用噪声抑制")
+                logger.info("应用高级噪声抑制")
                 try:
-                    audio_np = self.apply_noise_reduction(audio_np, resample_rate)
+                    audio_np = self.apply_advanced_noise_reduction(audio_np, resample_rate, noise_level_db)
                 except Exception as e:
                     logger.error(f"噪声抑制失败: {str(e)}")
             
+            # 估算噪声基线
+            noise_floor = self.estimate_noise_floor(audio_np, resample_rate)
+            logger.info(f"噪声基底估计: {noise_floor:.6f} ({20*np.log10(noise_floor+1e-10):.1f} dB)")
+            
             # 使用WebRTC VAD检测语音活动
-            segments = self.vad_detection(audio_np, resample_rate, frame_duration, aggressiveness, 
-                                        min_speech_duration, max_silence_duration, max_segment_duration,
-                                        min_energy_threshold, debug_output)
+            segments = self.enhanced_vad_detection(
+                audio_np, resample_rate, frame_duration, aggressiveness, 
+                min_speech_duration, max_silence_duration, max_segment_duration,
+                min_energy_threshold, noise_floor, adaptive_threshold, debug_output
+            )
             
             # 转换为Tensor格式
             segment_tensors = []
@@ -652,37 +661,61 @@ class AudioSpeechSegmenter:
             logger.error(f"音频分割过程中发生错误: {str(e)}")
             return (self.handle_invalid_input(), [], 0)
     
-    def apply_noise_reduction(self, audio, sample_rate):
-        """应用简单的噪声抑制"""
+    def apply_advanced_noise_reduction(self, audio, sample_rate, noise_level_db):
+        """应用更高级的噪声抑制算法，特别针对细微噪音"""
         try:
-            # 设计带通滤波器 (300Hz-3400Hz，语音范围)
-            nyquist = 0.5 * sample_rate
-            low = 300 / nyquist
-            high = 3400 / nyquist
-            b, a = butter(5, [low, high], btype='band')
+            # 1. 频谱减法
+            stft = librosa.stft(audio, n_fft=512, hop_length=128)
+            magnitude, phase = np.abs(stft), np.angle(stft)
             
-            # 应用滤波器
-            filtered_audio = lfilter(b, a, audio)
+            # 估计噪声谱（使用前10帧作为噪声样本）
+            noise_frames = min(10, magnitude.shape[1])
+            noise_est = np.median(magnitude[:, :noise_frames], axis=1)
             
-            # 动态范围压缩
-            compressed = np.sign(filtered_audio) * np.log1p(np.abs(filtered_audio))
+            # 应用谱减法
+            beta = 2.0  # 过减因子
+            denoised_mag = np.maximum(magnitude - beta * noise_est[:, np.newaxis], 0)
             
-            # 归一化
-            max_val = np.max(np.abs(compressed))
-            if max_val > 0:
-                compressed = compressed / max_val * 0.9
+            # 2. 应用自适应噪声门
+            noise_threshold = 10 ** (noise_level_db / 20)  # 将dB转换为幅度值
+            denoised_mag[denoised_mag < noise_threshold] = 0
             
-            return compressed
+            # 重建信号
+            denoised_stft = denoised_mag * np.exp(1j * phase)
+            denoised_audio = librosa.istft(denoised_stft, hop_length=128)
+            
+            return denoised_audio
         except Exception as e:
-            logger.error(f"噪声抑制失败: {str(e)}")
+            logger.error(f"高级噪声抑制失败: {str(e)}")
             return audio
     
-    def vad_detection(self, audio, sample_rate, frame_duration, aggressiveness, 
-                     min_speech_duration, max_silence_duration, max_segment_duration,
-                     min_energy_threshold, debug_output=False):
-        """使用WebRTC VAD检测语音段"""
+    def estimate_noise_floor(self, audio, sample_rate, percentile=25):
+        """估算噪声基底（能量分布的百分位数）"""
+        try:
+            # 计算每帧的能量
+            frame_size = int(sample_rate * 0.02)  # 20ms帧
+            n_frames = len(audio) // frame_size
+            energies = np.zeros(n_frames)
+            
+            for i in range(n_frames):
+                start = i * frame_size
+                end = start + frame_size
+                frame = audio[start:end]
+                energies[i] = np.sqrt(np.mean(frame**2))
+            
+            # 取低百分位数作为噪声基底
+            return np.percentile(energies, percentile)
+        except Exception as e:
+            logger.error(f"噪声基底估计失败: {str(e)}")
+            return 0.001  # 默认值
+    
+    def enhanced_vad_detection(self, audio, sample_rate, frame_duration, aggressiveness, 
+                             min_speech_duration, max_silence_duration, max_segment_duration,
+                             min_energy_threshold, noise_floor, adaptive_threshold, debug_output=False):
+        """增强版VAD检测，更好地区分语音和细微噪音"""
         logger.info(f"开始VAD检测: 采样率={sample_rate}Hz, 帧时长={frame_duration}ms")
         logger.info(f"参数: 攻击性={aggressiveness}, 最小语音时长={min_speech_duration}s, 最大静音时长={max_silence_duration}s")
+        logger.info(f"自适应阈值: {'启用' if adaptive_threshold else '禁用'}, 噪声基底={noise_floor:.6f}")
         
         try:
             # 检查采样率是否有效
@@ -740,21 +773,48 @@ class AudioSpeechSegmenter:
                         frame = (frame / max_val) * 32767
                     frame = frame.astype(np.int16)
                 
-                # 检测语音
+                # VAD基础检测
                 try:
                     is_speech = vad.is_speech(frame.tobytes(), sample_rate)
                 except Exception as e:
                     logger.error(f"帧#{i+1}处理错误: {str(e)}")
                     is_speech = False
                 
-                # 计算能量阈值（辅助检测）
-                energy = np.sqrt(np.mean(frame.astype(np.float32)** 2))
-                if energy < min_energy_threshold:
-                    if is_speech and debug_output:
-                        logger.debug(f"帧#{i+1}: 检测到语音但能量过低({energy:.4f}<{min_energy_threshold}), 标记为静音")
-                    is_speech = False
-                elif debug_output:
-                    logger.debug(f"帧#{i+1}: {'语音' if is_speech else '静音'}, 能量={energy:.4f}")
+                # 计算帧能量
+                frame_energy = np.sqrt(np.mean(frame.astype(np.float32)**2))
+                
+                # 自适应阈值处理
+                if adaptive_threshold:
+                    # 动态阈值 = 噪声基底 + 6dB (约2倍幅度)
+                    dynamic_threshold = max(min_energy_threshold, noise_floor * 2.0)
+                    if frame_energy < dynamic_threshold:
+                        if is_speech and debug_output:
+                            logger.debug(f"帧#{i+1}: 检测到语音但能量过低({frame_energy:.4f}<{dynamic_threshold}), 标记为静音")
+                        is_speech = False
+                    elif debug_output:
+                        logger.debug(f"帧#{i+1}: {'语音' if is_speech else '静音'}, 能量={frame_energy:.4f}")
+                else:
+                    # 固定阈值处理
+                    if frame_energy < min_energy_threshold:
+                        if is_speech and debug_output:
+                            logger.debug(f"帧#{i+1}: 检测到语音但能量过低({frame_energy:.4f}<{min_energy_threshold}), 标记为静音")
+                        is_speech = False
+                    elif debug_output:
+                        logger.debug(f"帧#{i+1}: {'语音' if is_speech else '静音'}, 能量={frame_energy:.4f}")
+                
+                # 附加特征：频谱平坦度检测（噪音通常频谱更平坦）
+                if is_speech:  # 只对VAD标记为语音的帧进行额外验证
+                    try:
+                        spectrum = np.abs(np.fft.rfft(frame.astype(np.float32)))
+                        spectral_flatness = np.exp(np.mean(np.log(spectrum + 1e-10))) / (np.mean(spectrum) + 1e-10)
+                        
+                        # 高平坦度表明可能是噪音（语音通常<0.5，噪音>0.7）
+                        if spectral_flatness > 0.65:
+                            if debug_output:
+                                logger.debug(f"帧#{i+1}: VAD标记为语音但频谱平坦({spectral_flatness:.3f})，标记为噪音")
+                            is_speech = False
+                    except Exception as e:
+                        logger.error(f"频谱平坦度计算错误: {str(e)}")
                 
                 speech_frames.append(is_speech)
             

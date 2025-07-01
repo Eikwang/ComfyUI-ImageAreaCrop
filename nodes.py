@@ -505,9 +505,9 @@ class AudioSpeechSegmenter:
             },
             "optional": {
                 "min_energy_threshold": ("FLOAT", {"default": 0.01, "min": 0.001, "max": 0.5, "step": 0.001}),  # 最小能量阈值
-                "noise_level_db": ("FLOAT", {"default": -60, "min": -90, "max": -30, "step": 1}),  # 噪音水平阈值(dB)
-                "noise_reduction": ("BOOLEAN", {"default": True}),  # 噪声抑制开关
-                "adaptive_threshold": ("BOOLEAN", {"default": True}),  # 自适应阈值开关
+                "noise_level_db": ("FLOAT", {"default": -40, "min": -90, "max": -30, "step": 1}),  # 噪音水平阈值(dB)
+                "noise_reduction": ("BOOLEAN", {"default": False}),  # 噪音抑制开关声抑制开关
+                "adaptive_threshold": ("BOOLEAN", {"default": False}),  # 自适应阈值开关
                 "resample_rate": ("INT", {"default": 16000, "min": 8000, "max": 48000, "step": 1000}),  # 重采样率
                 "debug_output": ("BOOLEAN", {"default": False}),  # 调试输出开关
             }

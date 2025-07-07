@@ -1,0 +1,864 @@
+{
+  "id": "2555f231-e157-4f74-aa27-9d36327f5b7f",
+  "revision": 0,
+  "last_node_id": 145,
+  "last_link_id": 237,
+  "nodes": [
+    {
+      "id": 4,
+      "type": "AudioSplitNode",
+      "pos": [
+        1310,
+        2450
+      ],
+      "size": [
+        270,
+        130
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 235
+        },
+        {
+          "label": "split_length",
+          "name": "split_length",
+          "type": "INT",
+          "widget": {
+            "name": "split_length"
+          },
+          "link": 210
+        },
+        {
+          "label": "skip_length",
+          "name": "skip_length",
+          "type": "INT",
+          "widget": {
+            "name": "skip_length"
+          },
+          "link": 234
+        }
+      ],
+      "outputs": [
+        {
+          "label": "segmented_audio",
+          "name": "segmented_audio",
+          "type": "AUDIO",
+          "links": [
+            76,
+            83
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "Eikwang/ComfyUI-ImageAreaCrop",
+        "ver": "66c690313153b10151f88fea4f63220e17cb8503",
+        "Node name for S&R": "AudioSplitNode",
+        "widget_ue_connectable": {
+          "frame_rate": true,
+          "split_length": true,
+          "skip_length": true,
+          "transition_length": true
+        }
+      },
+      "widgets_values": [
+        25,
+        121,
+        0,
+        15
+      ]
+    },
+    {
+      "id": 9,
+      "type": "LoadAudio",
+      "pos": [
+        -70,
+        2420
+      ],
+      "size": [
+        270,
+        136
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "label": "音频",
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            181,
+            235
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43",
+        "Node name for S&R": "LoadAudio",
+        "widget_ue_connectable": {
+          "audio": true,
+          "audioUI": true,
+          "upload": true
+        }
+      },
+      "widgets_values": [
+        "拯救-孙楠.320.mp3",
+        null,
+        null
+      ]
+    },
+    {
+      "id": 12,
+      "type": "SaveAudio",
+      "pos": [
+        1660,
+        2460
+      ],
+      "size": [
+        270,
+        112
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "音频",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 76
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.43",
+        "Node name for S&R": "SaveAudio",
+        "widget_ue_connectable": {
+          "filename_prefix": true,
+          "audioUI": true
+        }
+      },
+      "widgets_values": [
+        "audio/C"
+      ]
+    },
+    {
+      "id": 56,
+      "type": "easy showAnything",
+      "pos": [
+        2200,
+        2340
+      ],
+      "size": [
+        240,
+        1870
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "输入任何",
+          "name": "anything",
+          "shape": 7,
+          "type": "*",
+          "link": 214
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "e46f8a45d0f07558900eed0ad120d6ccbd0aab03",
+        "Node name for S&R": "easy showAnything",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "89",
+        "89",
+        "89",
+        "89",
+        "89",
+        "89",
+        "89",
+        "89",
+        "89",
+        "89",
+        "89"
+      ]
+    },
+    {
+      "id": 59,
+      "type": "AudioDurationToFrames",
+      "pos": [
+        1710,
+        2670
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 83
+        }
+      ],
+      "outputs": [
+        {
+          "label": "total_frames",
+          "name": "total_frames",
+          "type": "INT",
+          "links": [
+            213
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "Eikwang/ComfyUI-ImageAreaCrop",
+        "ver": "66c690313153b10151f88fea4f63220e17cb8503",
+        "Node name for S&R": "AudioDurationToFrames",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        3
+      ]
+    },
+    {
+      "id": 119,
+      "type": "AudioDurationToFrames",
+      "pos": [
+        180,
+        2290
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "audio",
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 181
+        }
+      ],
+      "outputs": [
+        {
+          "label": "total_frames",
+          "name": "total_frames",
+          "type": "INT",
+          "links": [
+            228,
+            237
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "Eikwang/ComfyUI-ImageAreaCrop",
+        "ver": "66c690313153b10151f88fea4f63220e17cb8503",
+        "Node name for S&R": "AudioDurationToFrames",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        25
+      ]
+    },
+    {
+      "id": 120,
+      "type": "Int",
+      "pos": [
+        -20,
+        2630
+      ],
+      "size": [
+        210,
+        60
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "label": "整数",
+          "name": "INT",
+          "type": "INT",
+          "slot_index": 0,
+          "links": [
+            210,
+            229,
+            231
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyLiterals",
+        "ver": "bdddb08ca82d90d75d97b1d437a652e0284a32ac",
+        "Node name for S&R": "Int",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "725"
+      ]
+    },
+    {
+      "id": 124,
+      "type": "easy forLoopStart",
+      "pos": [
+        750,
+        2080
+      ],
+      "size": [
+        210,
+        138
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "初始值1",
+          "name": "initial_value1",
+          "shape": 7,
+          "type": "*",
+          "link": null
+        },
+        {
+          "label": "总量",
+          "name": "total",
+          "type": "INT",
+          "widget": {
+            "name": "total"
+          },
+          "link": 230
+        },
+        {
+          "label": "initial_value2",
+          "name": "initial_value2",
+          "type": "*",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "流",
+          "name": "flow",
+          "shape": 5,
+          "type": "FLOW_CONTROL",
+          "slot_index": 0,
+          "links": [
+            205
+          ]
+        },
+        {
+          "label": "索引",
+          "name": "index",
+          "type": "INT",
+          "slot_index": 1,
+          "links": [
+            232
+          ]
+        },
+        {
+          "label": "值1",
+          "name": "value1",
+          "type": "*",
+          "slot_index": 2,
+          "links": [
+            191
+          ]
+        },
+        {
+          "label": "value2",
+          "name": "value2",
+          "type": "*",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "4f31641da38c9a3e0f5ed02a9c5bc97851f24935",
+        "Node name for S&R": "easy forLoopStart",
+        "widget_ue_connectable": {
+          "total": true
+        }
+      },
+      "widgets_values": [
+        1
+      ],
+      "color": "#1f1f48",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 126,
+      "type": "easy batchAnything",
+      "pos": [
+        1980,
+        2130
+      ],
+      "size": [
+        210,
+        50
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "any_1",
+          "name": "any_1",
+          "type": "*",
+          "link": 191
+        },
+        {
+          "label": "any_2",
+          "name": "any_2",
+          "type": "*",
+          "link": 213
+        }
+      ],
+      "outputs": [
+        {
+          "label": "batch",
+          "name": "batch",
+          "type": "*",
+          "slot_index": 0,
+          "links": [
+            206
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "4f31641da38c9a3e0f5ed02a9c5bc97851f24935",
+        "Node name for S&R": "easy batchAnything",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 138,
+      "type": "easy forLoopEnd",
+      "pos": [
+        2330,
+        2070
+      ],
+      "size": [
+        180,
+        86
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "流",
+          "name": "flow",
+          "shape": 5,
+          "type": "FLOW_CONTROL",
+          "link": 205
+        },
+        {
+          "label": "初始值1",
+          "name": "initial_value1",
+          "shape": 7,
+          "type": "*",
+          "link": 206
+        },
+        {
+          "name": "initial_value2",
+          "type": "*",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "label": "值1",
+          "name": "value1",
+          "type": "*",
+          "slot_index": 0,
+          "links": [
+            214
+          ]
+        },
+        {
+          "name": "value2",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-easy-use",
+        "ver": "4f31641da38c9a3e0f5ed02a9c5bc97851f24935",
+        "Node name for S&R": "easy forLoopEnd",
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [],
+      "color": "#1f1f48",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 142,
+      "type": "CM_IntBinaryOperation",
+      "pos": [
+        460,
+        2460
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "a",
+          "type": "INT",
+          "widget": {
+            "name": "a"
+          },
+          "link": 228
+        },
+        {
+          "name": "b",
+          "type": "INT",
+          "widget": {
+            "name": "b"
+          },
+          "link": 229
+        }
+      ],
+      "outputs": [
+        {
+          "label": "整数",
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            230,
+            236
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyMath",
+        "ver": "c01177221c31b8e5fbc062778fc8254aeb541638",
+        "widget_ue_connectable": {},
+        "Node name for S&R": "CM_IntBinaryOperation"
+      },
+      "widgets_values": [
+        "Div",
+        0,
+        0
+      ]
+    },
+    {
+      "id": 143,
+      "type": "CM_IntBinaryOperation",
+      "pos": [
+        990,
+        2470
+      ],
+      "size": [
+        270,
+        106
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "a",
+          "type": "INT",
+          "widget": {
+            "name": "a"
+          },
+          "link": 232
+        },
+        {
+          "name": "b",
+          "type": "INT",
+          "widget": {
+            "name": "b"
+          },
+          "link": 231
+        }
+      ],
+      "outputs": [
+        {
+          "label": "整数",
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            234
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "ComfyMath",
+        "ver": "c01177221c31b8e5fbc062778fc8254aeb541638",
+        "widget_ue_connectable": {},
+        "Node name for S&R": "CM_IntBinaryOperation"
+      },
+      "widgets_values": [
+        "Mul",
+        0,
+        0
+      ]
+    },
+    {
+      "id": 144,
+      "type": "Display Int (rgthree)",
+      "pos": [
+        750,
+        2470
+      ],
+      "size": [
+        140,
+        76
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "input",
+          "type": "INT",
+          "link": 236
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "f754c4765849aa748abb35a1f030a5ed6474a69b",
+        "widget_ue_connectable": {},
+        "Node name for S&R": "Display Int (rgthree)"
+      },
+      "widgets_values": [
+        ""
+      ]
+    },
+    {
+      "id": 145,
+      "type": "Display Int (rgthree)",
+      "pos": [
+        470,
+        2290
+      ],
+      "size": [
+        140,
+        76
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "input",
+          "type": "INT",
+          "link": 237
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "f754c4765849aa748abb35a1f030a5ed6474a69b",
+        "widget_ue_connectable": {},
+        "Node name for S&R": "Display Int (rgthree)"
+      },
+      "widgets_values": [
+        ""
+      ]
+    }
+  ],
+  "links": [
+    [
+      76,
+      4,
+      0,
+      12,
+      0,
+      "AUDIO"
+    ],
+    [
+      83,
+      4,
+      0,
+      59,
+      0,
+      "AUDIO"
+    ],
+    [
+      181,
+      9,
+      0,
+      119,
+      0,
+      "AUDIO"
+    ],
+    [
+      191,
+      124,
+      2,
+      126,
+      0,
+      "*"
+    ],
+    [
+      205,
+      124,
+      0,
+      138,
+      0,
+      "FLOW_CONTROL"
+    ],
+    [
+      206,
+      126,
+      0,
+      138,
+      1,
+      "*"
+    ],
+    [
+      210,
+      120,
+      0,
+      4,
+      1,
+      "INT"
+    ],
+    [
+      213,
+      59,
+      0,
+      126,
+      1,
+      "*"
+    ],
+    [
+      214,
+      138,
+      0,
+      56,
+      0,
+      "*"
+    ],
+    [
+      228,
+      119,
+      0,
+      142,
+      0,
+      "INT"
+    ],
+    [
+      229,
+      120,
+      0,
+      142,
+      1,
+      "INT"
+    ],
+    [
+      230,
+      142,
+      0,
+      124,
+      1,
+      "INT"
+    ],
+    [
+      231,
+      120,
+      0,
+      143,
+      1,
+      "INT"
+    ],
+    [
+      232,
+      124,
+      1,
+      143,
+      0,
+      "INT"
+    ],
+    [
+      234,
+      143,
+      0,
+      4,
+      2,
+      "INT"
+    ],
+    [
+      235,
+      9,
+      0,
+      4,
+      0,
+      "AUDIO"
+    ],
+    [
+      236,
+      142,
+      0,
+      144,
+      0,
+      "INT"
+    ],
+    [
+      237,
+      119,
+      0,
+      145,
+      0,
+      "INT"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.3452271214393346,
+      "offset": [
+        1496.6735661019275,
+        -1425.0742224884107
+      ]
+    },
+    "ue_links": [],
+    "links_added_by_ue": [],
+    "frontendVersion": "1.23.4",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": false,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

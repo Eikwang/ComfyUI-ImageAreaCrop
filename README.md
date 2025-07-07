@@ -79,3 +79,6 @@ AudioSegmentProcessor (音频片段中转)
 - save_to_local: 是否保存到本地（可选，默认为False）
 - select_segments: 选择要传输的片段索引列表（从0开始）
 - file_name: 保存的文件名（保存在output，默认为“audio/xx"）
+
+audiosilence (音频静音恢复节点)
+-    功能：根据分割信息将音频恢复到目标音频中的原始位置。

@@ -8,6 +8,7 @@ from .nodes import (
     AudioSpeechSegmenter,
     AudioSegmentProcessor,
     AudioSilenceRestorer,
+    VideoFrameCounter,
 )
 
 NODE_CLASS_MAPPINGS = {
@@ -20,6 +21,7 @@ NODE_CLASS_MAPPINGS = {
     "AudioSpeechSegmenter": AudioSpeechSegmenter,
     "AudioSegmentProcessor": AudioSegmentProcessor,
     "AudioSilenceRestorer": AudioSilenceRestorer,
+    "VideoFrameCounter": VideoFrameCounter,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -32,4 +34,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "AudioSpeechSegmenter": "音频语音分段",
     "AudioSegmentProcessor": "音频分段中转",
     "AudioSilenceRestorer": "音频静音恢复",
+    "VideoFrameCounter": "视频帧数计算",
 }

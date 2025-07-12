@@ -82,3 +82,6 @@ AudioSegmentProcessor (音频片段中转)
 
 audiosilence (音频静音恢复节点)
 -    功能：根据分割信息将音频恢复到目标音频中的原始位置。
+
+videocount (视频计数节点)
+-    功能：根据帧率计算视频总帧数。避免VHS加载长视频导致卡顿.

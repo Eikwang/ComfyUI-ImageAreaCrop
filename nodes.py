@@ -15,6 +15,9 @@ import pyaudio
 import wave
 from pydub import AudioSegment
 
+import comfy
+from comfy.sd import VAE
+
 import audioop
 import tempfile
 from comfy import model_management
@@ -1408,3 +1411,53 @@ class AudioSilenceRestorer:
                     if energies[i] < energy_threshold:
                         return region_start + i * step_size + frame_size
                 return region_end  # 没找到则返回结束位置
+            
+
+class VideoFrameCounter:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "video_path": ("STRING", {"default": "", "multiline": False}),
+            },
+        }
+    
+    RETURN_TYPES = ("INT",)
+    FUNCTION = "calculate_frames"
+    CATEGORY = "video_utils"
+
+    def clean_path(self, path):
+
+        cleaned = path.strip().strip('"').strip()
+
+        cleaned = cleaned.replace('\\\\', '\\')
+        return cleaned
+
+    def calculate_frames(self, video_path):
+        # 清理路径
+        clean_path = self.clean_path(video_path)
+        
+        # 验证路径有效性
+        if not os.path.isfile(clean_path):
+            raise ValueError(f"视频文件不存在: {clean_path}")
+        
+        # 尝试使用OpenCV获取视频信息
+        try:
+            cap = cv2.VideoCapture(clean_path)
+            if not cap.isOpened():
+                raise RuntimeError(f"无法打开视频文件: {clean_path}")
+                
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            duration = cap.get(cv2.CAP_PROP_FRAME_COUNT) / fps
+            
+            # 通过时长和帧率计算总帧数（更可靠的方式）
+            total_frames = int(duration * fps)
+            
+        finally:
+            cap.release()
+        
+        # 二次验证计算结果
+        if fps <= 0 or total_frames <= 0:
+            raise ValueError("无法获取有效的视频参数")
+            
+        return (total_frames,)

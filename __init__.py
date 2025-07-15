@@ -11,6 +11,8 @@ from .nodes import (
     VideoFrameCounter,
 )
 
+from .SequenceResampler import SequenceResampler
+
 NODE_CLASS_MAPPINGS = {
     "ImageAreaCropNode": ImageAreaCropNode,
     "AreaCropRestoreNode": AreaCropRestoreNode,
@@ -22,6 +24,7 @@ NODE_CLASS_MAPPINGS = {
     "AudioSegmentProcessor": AudioSegmentProcessor,
     "AudioSilenceRestorer": AudioSilenceRestorer,
     "VideoFrameCounter": VideoFrameCounter,
+    "SequenceResampler": SequenceResampler,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -35,4 +38,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "AudioSegmentProcessor": "音频分段中转",
     "AudioSilenceRestorer": "音频静音恢复",
     "VideoFrameCounter": "视频帧数计算",
+    "SequenceResampler": "序列重组",
 }

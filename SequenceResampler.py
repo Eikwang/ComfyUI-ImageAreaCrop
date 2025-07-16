@@ -22,12 +22,10 @@ def get_files_in_folder(folder_path):
 def safe_copy_file(source_file, destination_path):
     """安全复制文件，处理权限问题"""
     try:
-        # 如果目标文件已存在且被锁定，先尝试删除
         if os.path.exists(destination_path):
             try:
                 os.remove(destination_path)
             except PermissionError:
-                # 如果删除失败，尝试重命名旧文件
                 timestamp = int(time.time())
                 os.rename(destination_path, f"{destination_path}.old_{timestamp}")
         shutil.copy2(source_file, destination_path)
@@ -36,12 +34,10 @@ def safe_copy_file(source_file, destination_path):
         log(f"Error copying {source_file} to {destination_path}: {e}")
         return False
 
-def resample_sequence(imageDirectory, batchSize, overlapSize):
-    # 准备输出目录 - 使用更安全的命名
+def resample_sequence(imageDirectory, batchSize, Lapsize):
+    # 准备输出目录
     timestamp = int(time.time())
     output_dir = os.path.join(imageDirectory, f"resampled_output_{timestamp}")
-    
-    # 确保输出目录存在
     create_folder(output_dir)
     
     # 获取并排序输入文件
@@ -49,37 +45,68 @@ def resample_sequence(imageDirectory, batchSize, overlapSize):
     total_files = len(all_files)
     
     if total_files == 0:
-        return "", "No files found in input directory"
+        return output_dir, "No files found in input directory"
     
-    # 计算实际保留的文件索引
+    if Lapsize >= batchSize:
+        return output_dir, "ERROR: Lapsize must be smaller than BatchSize"
+    
+    # 图像序列重组逻辑
     selected_indices = []
-    step = batchSize - overlapSize  # 有效步长
+    block_size = batchSize + Lapsize  # 完整块大小
     
-    if step <= 0:
-        return "", "ERROR: OverlapSize must be smaller than BatchSize"
+    # 处理第一个块（完整保留）
+    first_block_end = min(block_size, total_files)
+    for i in range(0, first_block_end):
+        selected_indices.append(i)
     
-    current_index = 0
-    while current_index < total_files:
-        # 计算当前批次的结束位置
-        end_index = min(current_index + batchSize - overlapSize, total_files)
+    # 后续块处理
+    current_block_start = block_size
+    block_count = 1
+    
+    while current_block_start < total_files:
+        # 跳过前Lapsize张
+        keep_start = current_block_start + Lapsize
         
-        # 添加当前批次（不含重叠部分）
-        for i in range(current_index, end_index):
+        # 检查是否有足够的图像可以保留
+        if keep_start >= total_files:
+            break
+        
+        # 计算保留结束位置
+        keep_end = min(keep_start + batchSize, total_files)
+        
+        # 添加当前块要保留的部分
+        for i in range(keep_start, keep_end):
             selected_indices.append(i)
         
-        # 移动到下一个批次起点（跳过重叠部分）
-        current_index += batchSize
+        # 移动到下一个块的起始位置
+        current_block_start += block_size
+        block_count += 1
     
-    # 复制选中的文件到输出目录
+    # 复制选中的文件到输出目录，并按照0000格式命名
     copy_success = 0
     copy_fail = 0
-    for idx in selected_indices:
-        source_file = all_files[idx]
+    renamed_files = []
+    
+    # 确定新文件名所需的位数
+    total_selected = len(selected_indices)
+    if total_selected == 0:
+        num_digits = 4
+    else:
+        num_digits = len(str(total_selected - 1))
+        num_digits = max(4, num_digits)  # 确保至少4位
+    
+    for idx, file_index in enumerate(selected_indices):
+        source_file = all_files[file_index]
         file_name = os.path.basename(source_file)
-        destination_path = os.path.join(output_dir, file_name)
+        file_ext = os.path.splitext(file_name)[1]
+        
+        # 生成新的文件名，格式为0000、0001等
+        new_file_name = f"{idx:0{num_digits}d}{file_ext}"
+        destination_path = os.path.join(output_dir, new_file_name)
         
         if safe_copy_file(source_file, destination_path):
             copy_success += 1
+            renamed_files.append((file_name, new_file_name))
         else:
             copy_fail += 1
     
@@ -87,12 +114,25 @@ def resample_sequence(imageDirectory, batchSize, overlapSize):
     log_lines = [
         f"输入目录: {imageDirectory}",
         f"原始图像数量: {total_files}",
-        f"批次大小: {batchSize}, 重叠大小: {overlapSize}",
-        f"有效步长: {step}",
+        f"批次大小: {batchSize}, 重叠大小: {Lapsize}",
+        f"块大小: {block_size}",
         f"重组后图像数量: {len(selected_indices)}",
         f"成功复制: {copy_success}, 失败: {copy_fail}",
-        f"输出目录: {output_dir}"
+        f"输出目录: {output_dir}",
+        f"新文件名格式: {num_digits}位数字 (例如: {renamed_files[0][1] if renamed_files else 'N/A'} 到 {renamed_files[-1][1] if renamed_files else 'N/A'})"
     ]
+    
+    if selected_indices:
+        log_lines.append(f"保留范围: {selected_indices[0]}-{selected_indices[-1]}")
+    else:
+        log_lines.append("无文件保留")
+    
+    # 添加文件重命名示例
+    if renamed_files:
+        example_text = f"重命名示例: {renamed_files[0][0]} -> {renamed_files[0][1]}"
+        if len(renamed_files) > 1:
+            example_text += f", {renamed_files[-1][0]} -> {renamed_files[-1][1]}"
+        log_lines.append(example_text)
     
     return output_dir, "\n".join(log_lines)
 
@@ -106,7 +146,7 @@ class SequenceResampler:
             "required": {
                 "inputDirectory": ("STRING", {"default": "X:/your/image/folder"}),
                 "BatchSize": ("INT", {"default": 25, "min": 2, "max": 9999}),
-                "OverlapSize": ("INT", {"default": 5, "min": 1, "max": 9999}),
+                "Lapsize": ("INT", {"default": 5, "min": 1, "max": 9999}),
             },
         }
 
@@ -115,5 +155,5 @@ class SequenceResampler:
     RETURN_NAMES = ("OutputDirectory", "Log")
     CATEGORY = "Sequence Processing"
 
-    def resample(self, inputDirectory, BatchSize, OverlapSize):
-        return resample_sequence(inputDirectory, BatchSize, OverlapSize)
+    def resample(self, inputDirectory, BatchSize, Lapsize):
+        return resample_sequence(inputDirectory, BatchSize, Lapsize)

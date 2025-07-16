@@ -85,3 +85,6 @@ audiosilence (音频静音恢复节点)
 
 videocount (视频计数节点)
 -    功能：根据帧率计算视频总帧数。避免VHS加载长视频导致卡顿.
+
+SequenceResampler (图像序列重组节点)
+-    功能：根据BATCHSIZE和lapsize处理大批次循环图像。

@@ -1,7 +1,8 @@
+# 序列重采样节点
 import os
-import glob
 import shutil
 import time
+import glob
 
 def log(msg, tag="INFO"):
     pass
@@ -144,15 +145,15 @@ class SequenceResampler:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "inputDirectory": ("STRING", {"default": "X:/your/image/folder"}),
-                "BatchSize": ("INT", {"default": 25, "min": 2, "max": 9999}),
-                "Lapsize": ("INT", {"default": 5, "min": 1, "max": 9999}),
+                "inputDirectory": ("STRING", {"default": "X:/your/image/folder", "tooltip": "输入目录"}),
+                "BatchSize": ("INT", {"default": 25, "min": 2, "max": 9999, "tooltip": "批次大小"}),
+                "Lapsize": ("INT", {"default": 5, "min": 1, "max": 9999, "tooltip": "重叠大小"}),
             },
         }
 
     FUNCTION = "resample"
     RETURN_TYPES = ("STRING", "STRING")
-    RETURN_NAMES = ("OutputDirectory", "Log")
+    RETURN_NAMES = ("输出目录", "日志")
     CATEGORY = "Sequence Processing"
 
     def resample(self, inputDirectory, BatchSize, Lapsize):

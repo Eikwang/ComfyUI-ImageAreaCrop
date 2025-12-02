@@ -9,6 +9,8 @@ from .nodes import (
     MaskAreaCropNode, MaskAreaRestoreNode
 )
 
+WEB_DIRECTORY = "web"
+
 # 节点类映射
 NODE_CLASS_MAPPINGS = {
     "ImageAreaCropNode": ImageAreaCropNode,

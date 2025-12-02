@@ -1,5 +1,6 @@
 import { app } from "../../scripts/app.js";
 import { ComfyWidgets } from "../../scripts/widgets.js";
+import { api } from "../../scripts/api.js";
 
 // 加载CSS样式
 const link = document.createElement('link');
@@ -22,6 +23,7 @@ class ImageAreaCropExtension {
         this.scale = 1;
         this.offsetX = 0;
         this.offsetY = 0;
+        this.hasSelection = false;
     }
 
     bindNode(node) {
@@ -47,22 +49,85 @@ class ImageAreaCropExtension {
         controls.className = 'image-crop-controls';
         
         const resetBtn = document.createElement('button');
-        resetBtn.textContent = '重置';
-        resetBtn.className = 'crop-btn';
+        resetBtn.textContent = '清除裁切信息';
+        resetBtn.className = 'visual-crop-btn';
         resetBtn.onclick = () => this.resetSelection();
         
         const applyBtn = document.createElement('button');
         applyBtn.textContent = '应用选择';
-        applyBtn.className = 'crop-btn crop-btn-primary';
+        applyBtn.className = 'visual-crop-btn primary';
         applyBtn.onclick = () => this.applySelection();
-        
+
+        const sizeInfo = document.createElement('div');
+        sizeInfo.className = 'visual-crop-info';
+        sizeInfo.textContent = '精准尺寸控制';
+
+        const xInput = document.createElement('input');
+        xInput.type = 'number';
+        xInput.min = '0';
+        xInput.placeholder = 'X';
+        xInput.style.width = '70px';
+        xInput.onchange = () => {
+            const x = Math.max(0, parseInt(xInput.value || '0'));
+            this.startX = this.offsetX + x * this.scale;
+            this.currentX = Math.max(this.startX, this.currentX);
+            this.drawCropArea();
+            this.updateNodeParameters();
+        };
+
+        const yInput = document.createElement('input');
+        yInput.type = 'number';
+        yInput.min = '0';
+        yInput.placeholder = 'Y';
+        yInput.style.width = '70px';
+        yInput.onchange = () => {
+            const y = Math.max(0, parseInt(yInput.value || '0'));
+            this.startY = this.offsetY + y * this.scale;
+            this.currentY = Math.max(this.startY, this.currentY);
+            this.drawCropArea();
+            this.updateNodeParameters();
+        };
+
+        const wInput = document.createElement('input');
+        wInput.type = 'number';
+        wInput.min = '1';
+        wInput.placeholder = '宽度';
+        wInput.style.width = '80px';
+        wInput.onchange = () => {
+            const width = Math.max(1, parseInt(wInput.value || '0'));
+            this.currentX = this.startX + width * this.scale;
+            this.drawCropArea();
+            this.updateNodeParameters();
+        };
+
+        const hInput = document.createElement('input');
+        hInput.type = 'number';
+        hInput.min = '1';
+        hInput.placeholder = '高度';
+        hInput.style.width = '80px';
+        hInput.onchange = () => {
+            const height = Math.max(1, parseInt(hInput.value || '0'));
+            this.currentY = this.startY + height * this.scale;
+            this.drawCropArea();
+            this.updateNodeParameters();
+        };
+
         controls.appendChild(resetBtn);
         controls.appendChild(applyBtn);
+        controls.appendChild(xInput);
+        controls.appendChild(yInput);
+        controls.appendChild(wInput);
+        controls.appendChild(hInput);
+        controls.appendChild(sizeInfo);
         
         container.appendChild(this.canvas);
         container.appendChild(controls);
         
         // 绑定鼠标事件
+        this.wInputRef = wInput;
+        this.hInputRef = hInput;
+        this.xInputRef = xInput;
+        this.yInputRef = yInput;
         this.bindCanvasEvents();
         
         return container;
@@ -74,24 +139,39 @@ class ImageAreaCropExtension {
         this.canvas.addEventListener('mousedown', (e) => {
             this.isDragging = true;
             const rect = this.canvas.getBoundingClientRect();
-            this.startX = e.clientX - rect.left;
-            this.startY = e.clientY - rect.top;
+            const sx = this.canvas.width / rect.width;
+            const sy = this.canvas.height / rect.height;
+            this.startX = (e.clientX - rect.left) * sx;
+            this.startY = (e.clientY - rect.top) * sy;
             this.currentX = this.startX;
             this.currentY = this.startY;
         });
 
         this.canvas.addEventListener('mousemove', (e) => {
             if (!this.isDragging) return;
-            
             const rect = this.canvas.getBoundingClientRect();
-            this.currentX = e.clientX - rect.left;
-            this.currentY = e.clientY - rect.top;
-            
+            const sx = this.canvas.width / rect.width;
+            const sy = this.canvas.height / rect.height;
+            this.currentX = (e.clientX - rect.left) * sx;
+            this.currentY = (e.clientY - rect.top) * sy;
             this.drawCropArea();
         });
 
         this.canvas.addEventListener('mouseup', () => {
             this.isDragging = false;
+            const x = Math.min(this.startX, this.currentX);
+            const y = Math.min(this.startY, this.currentY);
+            const width = Math.abs(this.currentX - this.startX);
+            const height = Math.abs(this.currentY - this.startY);
+            const imgX = Math.round((x - this.offsetX) / this.scale);
+            const imgY = Math.round((y - this.offsetY) / this.scale);
+            const imgW = Math.round(width / this.scale);
+            const imgH = Math.round(height / this.scale);
+            if (this.wInputRef) this.wInputRef.value = Math.max(1, imgW);
+            if (this.hInputRef) this.hInputRef.value = Math.max(1, imgH);
+            if (this.xInputRef) this.xInputRef.value = Math.max(0, imgX);
+            if (this.yInputRef) this.yInputRef.value = Math.max(0, imgY);
+            this.hasSelection = imgW > 0 && imgH > 0;
             this.updateNodeParameters();
         });
 
@@ -175,10 +255,11 @@ class ImageAreaCropExtension {
             this.ctx.lineWidth = 2;
             this.ctx.strokeRect(x, y, width, height);
 
-            // 显示尺寸信息
-            this.ctx.fillStyle = '#00ff00';
-            this.ctx.font = '12px Arial';
-            this.ctx.fillText(`${Math.round(width)}x${Math.round(height)}`, x, y - 5);
+        const imgW = Math.round(width / this.scale);
+        const imgH = Math.round(height / this.scale);
+        this.ctx.fillStyle = '#00ff00';
+        this.ctx.font = '12px Arial';
+        this.ctx.fillText(`${imgW}x${imgH}`, x, Math.max(10, y - 5));
         }
     }
 
@@ -191,10 +272,16 @@ class ImageAreaCropExtension {
         const height = Math.abs(this.currentY - this.startY);
 
         // 转换画布坐标到图像坐标
-        const imgX = Math.round((x - this.offsetX) / this.scale);
-        const imgY = Math.round((y - this.offsetY) / this.scale);
-        const imgWidth = Math.round(width / this.scale);
-        const imgHeight = Math.round(height / this.scale);
+        let imgX = Math.round((x - this.offsetX) / this.scale);
+        let imgY = Math.round((y - this.offsetY) / this.scale);
+        let imgWidth = Math.round(width / this.scale);
+        let imgHeight = Math.round(height / this.scale);
+
+        // 边界约束
+        imgX = Math.max(0, Math.min(imgX, this.imageData.width - 1));
+        imgY = Math.max(0, Math.min(imgY, this.imageData.height - 1));
+        imgWidth = Math.max(1, Math.min(imgWidth, this.imageData.width - imgX));
+        imgHeight = Math.max(1, Math.min(imgHeight, this.imageData.height - imgY));
 
         // 更新节点参数
         const xWidget = this.node.widgets.find(w => w.name === 'x');
@@ -202,10 +289,10 @@ class ImageAreaCropExtension {
         const widthWidget = this.node.widgets.find(w => w.name === 'width');
         const heightWidget = this.node.widgets.find(w => w.name === 'height');
 
-        if (xWidget) xWidget.value = Math.max(0, imgX);
-        if (yWidget) yWidget.value = Math.max(0, imgY);
-        if (widthWidget) widthWidget.value = Math.max(1, imgWidth);
-        if (heightWidget) heightWidget.value = Math.max(1, imgHeight);
+        if (xWidget) xWidget.value = imgX;
+        if (yWidget) yWidget.value = imgY;
+        if (widthWidget) widthWidget.value = imgWidth;
+        if (heightWidget) heightWidget.value = imgHeight;
     }
 
     resetSelection() {
@@ -213,14 +300,58 @@ class ImageAreaCropExtension {
         this.startY = 0;
         this.currentX = 0;
         this.currentY = 0;
+        if (this.wInputRef) this.wInputRef.value = '';
+        if (this.hInputRef) this.hInputRef.value = '';
+        if (this.xInputRef) this.xInputRef.value = '';
+        if (this.yInputRef) this.yInputRef.value = '';
         this.drawCropArea();
         this.updateNodeParameters();
+        if (this.node) {
+            api.fetchApi('/image_cropper/clear', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ node_id: this.nodeKey ?? this.node.id })
+            });
+        }
     }
 
     applySelection() {
-        this.updateNodeParameters();
-        // 可以在这里添加其他应用逻辑
-        console.log('Selection applied');
+        if (!this.node || !this.imageData) return;
+        const rect = this.getImageRect();
+        rect.x = Math.max(0, Math.min(rect.x, this.imageData.width - 1));
+        rect.y = Math.max(0, Math.min(rect.y, this.imageData.height - 1));
+        rect.width = Math.max(1, Math.min(rect.width, this.imageData.width - rect.x));
+        rect.height = Math.max(1, Math.min(rect.height, this.imageData.height - rect.y));
+        api.fetchApi('/image_cropper/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                node_id: this.nodeKey ?? this.node.id,
+                x: rect.x,
+                y: rect.y,
+                width: rect.width,
+                height: rect.height,
+            })
+        }).then(() => {
+            if (this.node && this.node.visualCropDialog) {
+                try {
+                    document.body.removeChild(this.node.visualCropDialog);
+                } catch {}
+                this.node.visualCropDialog = null;
+            }
+        });
+    }
+
+    getImageRect() {
+        const x = Math.min(this.startX, this.currentX);
+        const y = Math.min(this.startY, this.currentY);
+        const width = Math.abs(this.currentX - this.startX);
+        const height = Math.abs(this.currentY - this.startY);
+        const imgX = Math.round((x - this.offsetX) / this.scale);
+        const imgY = Math.round((y - this.offsetY) / this.scale);
+        const imgWidth = Math.round(width / this.scale);
+        const imgHeight = Math.round(height / this.scale);
+        return { x: Math.max(0, imgX), y: Math.max(0, imgY), width: Math.max(1, imgWidth), height: Math.max(1, imgHeight) };
     }
 
     onImageInputConnected(imageUrl) {
@@ -233,7 +364,24 @@ class ImageAreaCropExtension {
 // 注册ComfyUI扩展
 app.registerExtension({
     name: "ImageAreaCrop.VisualCrop",
-    
+    async setup() {
+        // 自动弹窗事件监听（由后端节点发送）
+        api.addEventListener('image_area_crop_update', ({ detail }) => {
+            const { node_id, image_data } = detail;
+            const resolvedId = typeof node_id === 'string' ? parseInt(node_id, 10) : node_id;
+            const node = app.graph.getNodeById(resolvedId);
+            if (!node) return;
+            if (!node.visualCropExtension) {
+                const extension = new ImageAreaCropExtension();
+                extension.bindNode(node);
+                node.visualCropExtension = extension;
+            }
+            // 记录后端发来的唯一标识，确保提交与后端一致
+            node.visualCropExtension.nodeKey = node_id;
+            node.openVisualCropDialog?.();
+            node.visualCropExtension.loadImage(image_data);
+        });
+    },
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
         if (nodeData.name === "ImageAreaCropNode") {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
@@ -267,7 +415,28 @@ app.registerExtension({
                 
                 // 存储扩展实例
                 this.visualCropExtension = extension;
-                
+
+                // 在节点上增加清除参数按钮
+                this.addWidget("button", "清除参数", null, async () => {
+                    try {
+                        const clearId = this.visualCropExtension?.nodeKey ?? this.id;
+                        await api.fetchApi("/image_cropper/clear", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ node_id: clearId })
+                        });
+                        if (this.visualCropExtension) {
+                            this.visualCropExtension.hasSelection = false;
+                            this.visualCropExtension.startX = 0;
+                            this.visualCropExtension.startY = 0;
+                            this.visualCropExtension.currentX = 0;
+                            this.visualCropExtension.currentY = 0;
+                        }
+                    } catch (e) {
+                        console.error("清除裁切参数失败", e);
+                    }
+                });
+
                 // 添加右键菜单选项
                 const originalGetExtraMenuOptions = this.getExtraMenuOptions;
                 this.getExtraMenuOptions = function(_, options) {
@@ -316,10 +485,24 @@ app.registerExtension({
                     dialog.appendChild(title);
                     
                     // 创建可视化界面
-                    const visualInterface = this.visualCropExtension.createVisualInterface();
-                    if (visualInterface) {
-                        dialog.appendChild(visualInterface);
-                    }
+                const visualInterface = this.visualCropExtension.createVisualInterface();
+                if (visualInterface) {
+                    dialog.appendChild(visualInterface);
+                }
+
+                // 获取已缓存图像（上次运行保存）以便右键打开能显示图像
+                try {
+                    api.fetchApi('/image_cropper/get', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ node_id: this.visualCropExtension.nodeKey ?? this.id })
+                    }).then(async (res) => {
+                        const data = await res.json();
+                        if (data && data.image_data) {
+                            this.visualCropExtension.loadImage(data.image_data);
+                        }
+                    }).catch(() => {});
+                } catch {}
                     
                     // 添加关闭按钮
                     const closeBtn = document.createElement('button');
@@ -336,7 +519,25 @@ app.registerExtension({
                         margin-left: auto;
                         margin-right: auto;
                     `;
-                    closeBtn.onclick = () => {
+                    closeBtn.onclick = async () => {
+                        try {
+                            if (this.visualCropExtension && this.visualCropExtension.hasSelection) {
+                                await api.fetchApi('/image_cropper/apply', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        node_id: this.visualCropExtension.nodeKey ?? this.id,
+                                        ...this.visualCropExtension.getImageRect()
+                                    })
+                                });
+                            } else {
+                                await api.fetchApi('/image_cropper/cancel', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ node_id: this.visualCropExtension.nodeKey ?? this.id })
+                                });
+                            }
+                        } catch {}
                         document.body.removeChild(dialog);
                         this.visualCropDialog = null;
                     };

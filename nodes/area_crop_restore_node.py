@@ -12,6 +12,9 @@ class AreaCropRestoreNode:
                 "target_image": ("IMAGE", {"tooltip": "要贴回的目标图像"}),
                 "crop_info": ("JSON", {"tooltip": "裁切信息（位置与尺寸）"}),
             },
+            "optional": {
+                "scale_info": ("JSON", {"tooltip": "缩放信息（如裁切阶段启用缩放）"}),
+            }
         }
 
     RETURN_TYPES = ("IMAGE",)
@@ -19,7 +22,7 @@ class AreaCropRestoreNode:
     RETURN_NAMES = ("复原图像",)
     CATEGORY = "image"
 
-    def restore_image(self, cropped_image, target_image, crop_info):
+    def restore_image(self, cropped_image, target_image, crop_info, scale_info=None):
         device = cropped_image.device
         B, H, W, C = target_image.shape
         
@@ -67,6 +70,20 @@ class AreaCropRestoreNode:
         for (target_h, target_w), indices in size_groups.items():
             # 获取该组的所有裁剪图像
             group_crops = cropped_image[indices]
+            # 如果提供了缩放信息且启用缩放，先回缩到目标尺寸
+            use_scale = False
+            if scale_info is not None:
+                si = scale_info[0] if isinstance(scale_info, list) else scale_info
+                use_scale = bool(si.get("enabled", False))
+            if use_scale and (group_crops.shape[1] != target_h or group_crops.shape[2] != target_w):
+                group_crops = group_crops.permute(0, 3, 1, 2)
+                group_crops = interpolate(
+                    group_crops,
+                    size=(target_h, target_w),
+                    mode='bilinear',
+                    align_corners=False
+                )
+                group_crops = group_crops.permute(0, 2, 3, 1)
             
             # 检查是否需要调整尺寸
             if group_crops.shape[1] != target_h or group_crops.shape[2] != target_w:

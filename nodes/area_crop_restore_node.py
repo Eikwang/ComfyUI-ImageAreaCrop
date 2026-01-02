@@ -1,5 +1,5 @@
 # 区域裁切恢复节点
-from .common_imports import interpolate
+from .common_imports import interpolate, torch
 
 
 class AreaCropRestoreNode:
@@ -11,6 +11,7 @@ class AreaCropRestoreNode:
                 "cropped_image": ("IMAGE", {"tooltip": "裁切后的图像"}),
                 "target_image": ("IMAGE", {"tooltip": "要贴回的目标图像"}),
                 "crop_info": ("JSON", {"tooltip": "裁切信息（位置与尺寸）"}),
+                "expand_mode": (["pingpong", "repeat"], {"default": "pingpong", "tooltip": "当处理后图像数量多于原图时的扩展方式"}),
             },
             "optional": {
                 "scale_info": ("JSON", {"tooltip": "缩放信息（如裁切阶段启用缩放）"}),
@@ -22,16 +23,64 @@ class AreaCropRestoreNode:
     RETURN_NAMES = ("复原图像",)
     CATEGORY = "image"
 
-    def restore_image(self, cropped_image, target_image, crop_info, scale_info=None):
+    def restore_image(self, cropped_image, target_image, crop_info, expand_mode="pingpong", scale_info=None):
         device = cropped_image.device
-        B, H, W, C = target_image.shape
+        B_target, H, W, C = target_image.shape
+        B_cropped = cropped_image.shape[0]
         
-        # 复制目标图像以避免原地修改
-        restored = target_image.clone()
+        # 根据裁切图像和目标图像的数量差异处理
+        if B_cropped < B_target:
+            # 情况1: 处理后的图像数量少于目标图像数量，只恢复前B_cropped帧
+            restored = target_image.clone()
+            effective_batch_size = B_cropped
+        elif B_cropped > B_target:
+            # 情况2: 处理后的图像数量多于目标图像数量，扩展目标图像
+            if expand_mode == "repeat":
+                # 重复最后一帧
+                additional_frames = B_cropped - B_target
+                last_frame = target_image[-1:].repeat(additional_frames, 1, 1, 1)
+                expanded_target = torch.cat([target_image, last_frame], dim=0)
+            else:  # pingpong
+                # 首尾循环方式扩展
+                additional_frames = B_cropped - B_target
+                cycle_length = B_target
+                
+                # 创建pingpong模式的索引序列
+                # 例如，如果有441帧要扩展到496帧，额外需要55帧
+                # pingpong模式: 0,1,2,...,440,440,...,2,1,0,0,1,2,...
+                forward_indices = list(range(B_target))  # 0 to 440
+                backward_indices = list(range(B_target-2, 0, -1))  # 439 to 1 (reversed)
+                
+                pingpong_sequence = forward_indices + backward_indices
+                
+                # 循环使用pingpong序列来获取额外帧
+                extended_frames = []
+                for i in range(additional_frames):
+                    idx = pingpong_sequence[i % len(pingpong_sequence)]
+                    extended_frames.append(target_image[idx:idx+1])
+                
+                if extended_frames:
+                    extended_part = torch.cat(extended_frames, dim=0)
+                    expanded_target = torch.cat([target_image, extended_part], dim=0)
+                else:
+                    expanded_target = target_image
+            
+            restored = expanded_target.clone()
+            effective_batch_size = B_cropped
+        else:
+            # 数量相等，直接使用原目标图像
+            restored = target_image.clone()
+            effective_batch_size = B_target
         
-        # 确保裁切信息是列表格式
+        # 确保裁切信息是列表格式，并根据实际处理的帧数调整
         if not isinstance(crop_info, list):
-            crop_info = [crop_info] * B
+            crop_info = [crop_info] * effective_batch_size
+        elif len(crop_info) < effective_batch_size:
+            # 如果crop_info数量不足，循环使用
+            extended_crop_info = []
+            for i in range(effective_batch_size):
+                extended_crop_info.append(crop_info[i % len(crop_info)])
+            crop_info = extended_crop_info
         
         # 为批量处理准备坐标和尺寸
         x_coords = []
@@ -39,7 +88,7 @@ class AreaCropRestoreNode:
         target_heights = []
         target_widths = []
         
-        for i in range(B):
+        for i in range(effective_batch_size):
             info = crop_info[i] if i < len(crop_info) else crop_info[0]
             x, y = info["crop_position"]
             w, h = info["crop_size"]
@@ -55,12 +104,15 @@ class AreaCropRestoreNode:
             target_widths.append(w)
             target_heights.append(h)
         
+        # 使用实际处理的帧数来处理裁剪图像
+        processed_cropped = cropped_image[:effective_batch_size]
+        
         # 创建一个列表来存储调整后的裁剪图像
         resized_crops = []
         
         # 分组处理相同尺寸的图像以提高效率
         size_groups = {}
-        for i in range(B):
+        for i in range(effective_batch_size):
             size_key = (target_heights[i], target_widths[i])
             if size_key not in size_groups:
                 size_groups[size_key] = []
@@ -69,7 +121,7 @@ class AreaCropRestoreNode:
         # 按尺寸组处理
         for (target_h, target_w), indices in size_groups.items():
             # 获取该组的所有裁剪图像
-            group_crops = cropped_image[indices]
+            group_crops = processed_cropped[indices]
             # 如果提供了缩放信息且启用缩放，先回缩到目标尺寸
             use_scale = False
             if scale_info is not None:
@@ -112,7 +164,7 @@ class AreaCropRestoreNode:
         resized_crops = [crop for _, crop in resized_crops]
         
         # 将图像贴回目标位置
-        for i in range(B):
+        for i in range(effective_batch_size):
             # 获取当前裁剪图像
             current_crop = resized_crops[i]
             

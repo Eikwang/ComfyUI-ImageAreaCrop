@@ -9,12 +9,12 @@ class AudioSegmentProcessor:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "audio_segments": ("AUDIO_LIST", {"tooltip": "音频片段列表"}),
-                "segment_info": ("JSON", {"tooltip": "片段信息JSON"}),
-                "merge_segments": ("BOOLEAN", {"default": True, "tooltip": "是否合并片段"}),
-                "save_segments": ("BOOLEAN", {"default": False, "tooltip": "是否保存片段"}),
-                "selected_index": ("INT", {"default": 0, "min": 0, "max": 999, "step": 1, "tooltip": "选定片段索引"}),
-                "filename_prefix": ("STRING", {"default": "segment", "tooltip": "文件名前缀"}),
+                "audio_segments": ("AUDIO_LIST", {"tooltip": "音频片段列表", "label": "音频片段"}),
+                "segment_info": ("JSON", {"tooltip": "片段信息JSON", "label": "片段信息"}),
+                "merge_segments": ("BOOLEAN", {"default": True, "tooltip": "是否合并片段", "label": "合并片段"}),
+                "save_segments": ("BOOLEAN", {"default": False, "tooltip": "是否保存片段", "label": "保存片段"}),
+                "selected_index": ("INT", {"default": 0, "min": 0, "max": 999, "step": 1, "tooltip": "选定片段索引", "label": "选定索引"}),
+                "filename_prefix": ("STRING", {"default": "segment", "tooltip": "文件名前缀", "label": "文件名前缀"}),
             }
         }
     
@@ -36,26 +36,29 @@ class AudioSegmentProcessor:
             return (self._create_empty_audio(),)
         
         try:
-            if merge_segments:
-                # 合并所有音频片段
-                merged_audio = self._merge_audio_segments(audio_segments)
-                
-                # 保存合并后的音频（可选）
-                if save_segments:
+            # 当save_segments开启时，只进行保存操作，忽略selected_index
+            if save_segments:
+                if merge_segments:
+                    # 合并所有音频片段并保存
+                    merged_audio = self._merge_audio_segments(audio_segments)
                     self._save_audio(merged_audio, f"{filename_prefix}_merged.wav")
+                else:
+                    # 保存所有单独的音频片段
+                    for i, audio_segment in enumerate(audio_segments):
+                        self._save_audio(audio_segment, f"{filename_prefix}_{i}.wav")
                 
-                return (merged_audio,)
+                # 返回第一个片段作为输出（即使保存了其他内容）
+                if audio_segments:
+                    return (audio_segments[0],)
+                else:
+                    return (self._create_empty_audio(),)
             else:
-                # 选择单个片段
+                # 当save_segments关闭时，根据selected_index返回指定片段
                 if selected_index >= len(audio_segments):
                     logger.warning(f"选定索引 {selected_index} 超出范围，使用最后一个片段")
                     selected_index = len(audio_segments) - 1
                 
                 selected_audio = audio_segments[selected_index]
-                
-                # 保存选定的音频片段（可选）
-                if save_segments:
-                    self._save_audio(selected_audio, f"{filename_prefix}_{selected_index}.wav")
                 
                 return (selected_audio,)
         
@@ -146,12 +149,17 @@ class AudioSegmentProcessor:
             elif waveform.ndim == 1:
                 waveform = waveform.unsqueeze(0)  # 添加channel维度
             
-            # 创建输出目录
-            output_dir = "output/audio_segments"
-            os.makedirs(output_dir, exist_ok=True)
+            # 确保波形是CPU张量
+            waveform = waveform.cpu()
+            
+            # 使用ComfyUI的标准输出目录
+            from .common_imports import folder_paths
+            output_dir = folder_paths.get_output_directory()
+            audio_output_dir = os.path.join(output_dir, "audio_segments")
+            os.makedirs(audio_output_dir, exist_ok=True)
             
             # 完整文件路径
-            filepath = os.path.join(output_dir, filename)
+            filepath = os.path.join(audio_output_dir, filename)
             
             # 保存音频文件
             torchaudio.save(filepath, waveform, sample_rate)
@@ -159,6 +167,28 @@ class AudioSegmentProcessor:
         
         except Exception as e:
             logger.error(f"保存音频文件时发生错误: {str(e)}")
+            # 尝试使用不同的音频格式
+            try:
+                if "waveform" in audio and "sample_rate" in audio:
+                    waveform = audio["waveform"].cpu()
+                    sample_rate = audio["sample_rate"]
+                    
+                    # 如果原始保存失败，尝试调整数值范围
+                    if waveform.max() > 1.0 or waveform.min() < -1.0:
+                        # 归一化到 [-1, 1] 范围
+                        waveform = torch.clamp(waveform, -1.0, 1.0)
+                    
+                    # 使用ComfyUI的标准输出目录
+                    from .common_imports import folder_paths
+                    output_dir = folder_paths.get_output_directory()
+                    audio_output_dir = os.path.join(output_dir, "audio_segments")
+                    os.makedirs(audio_output_dir, exist_ok=True)
+                    filepath = os.path.join(audio_output_dir, filename)
+                    
+                    torchaudio.save(filepath, waveform, sample_rate)
+                    logger.info(f"音频已使用归一化方式保存到: {filepath}")
+            except Exception as e2:
+                logger.error(f"音频保存失败: {str(e2)}")
     
     def _create_empty_audio(self):
         """创建空音频对象"""

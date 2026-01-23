@@ -10,19 +10,21 @@ class AudioSpeechSegmenter:
         return {
             "required": {
                 "audio": ("AUDIO", {"tooltip": "输入音频"}),
-                "frame_duration": ("INT", {"default": 20, "min": 10, "max": 30, "step": 10, "tooltip": "VAD帧时长(毫秒)"}),
-                "min_speech_duration": ("FLOAT", {"default": 1, "min": 0.1, "max": 5.0, "step": 0.1, "tooltip": "最小语音时长(秒)"}),
-                "max_silence_duration": ("FLOAT", {"default": 0.5, "min": 0.1, "max": 2.0, "step": 0.1, "tooltip": "最大静音时长(秒)"}),
-                "aggressiveness": ("INT", {"default": 2, "min": 1, "max": 3, "step": 1, "tooltip": "VAD灵敏度"}),
-                "max_segment_duration": ("FLOAT", {"default": 10.0, "min": 1.0, "max": 60.0, "step": 1.0, "tooltip": "最大片段时长(秒)"}),
+                "frame_duration": ("INT", {"default": 20, "min": 10, "max": 30, "step": 10, "tooltip": "VAD帧时长(毫秒)", "label": "帧时长"}),
+                "min_speech_duration": ("FLOAT", {"default": 1, "min": 0.1, "max": 5.0, "step": 0.1, "tooltip": "最小语音时长(秒)", "label": "最小语音时长"}),
+                "max_silence_duration": ("FLOAT", {"default": 0.5, "min": 0.1, "max": 2.0, "step": 0.1, "tooltip": "最大静音时长(秒)", "label": "最大静音时长"}),
+                "aggressiveness": ("INT", {"default": 2, "min": 1, "max": 3, "step": 1, "tooltip": "VAD灵敏度", "label": "VAD灵敏度"}),
+                "max_segment_duration": ("FLOAT", {"default": 10.0, "min": 1.0, "max": 60.0, "step": 1.0, "tooltip": "最大片段时长(秒)", "label": "最大片段时长"}),
             },
             "optional": {
-                "min_energy_threshold": ("FLOAT", {"default": 0.01, "min": 0.001, "max": 0.5, "step": 0.001, "tooltip": "最小能量阈值"}),
-                "noise_level_db": ("FLOAT", {"default": -40, "min": -90, "max": -30, "step": 1, "tooltip": "噪声水平(dB)"}),
-                "noise_reduction": ("BOOLEAN", {"default": False, "tooltip": "噪声抑制"}),
-                "adaptive_threshold": ("BOOLEAN", {"default": False, "tooltip": "自适应阈值"}),
-                "resample_rate": ("INT", {"default": 16000, "min": 8000, "max": 48000, "step": 1000, "tooltip": "重采样率(Hz)"}),
-                "debug_output": ("BOOLEAN", {"default": False, "tooltip": "调试输出"}),
+                "min_energy_threshold": ("FLOAT", {"default": 0.01, "min": 0.001, "max": 0.5, "step": 0.001, "tooltip": "最小能量阈值", "label": "最小能量阈值"}),
+                "noise_level_db": ("FLOAT", {"default": -40, "min": -90, "max": -30, "step": 1, "tooltip": "噪声水平(dB)", "label": "噪声水平"}),
+                "noise_reduction": ("BOOLEAN", {"default": False, "tooltip": "噪声抑制", "label": "噪声抑制"}),
+                "adaptive_threshold": ("BOOLEAN", {"default": False, "tooltip": "自适应阈值", "label": "自适应阈值"}),
+                "resample_rate": ("INT", {"default": 16000, "min": 8000, "max": 48000, "step": 1000, "tooltip": "重采样率(Hz)", "label": "重采样率"}),
+                "enable_loudness_normalization": ("BOOLEAN", {"default": False, "tooltip": "启用响度标准化", "label": "响度标准化"}),
+                "target_lufs": ("FLOAT", {"default": -16.0, "min": -30.0, "max": 0.0, "step": 0.1, "tooltip": "目标响度(LUFS)，推荐-16 LUFS", "label": "目标响度"}),
+                "debug_output": ("BOOLEAN", {"default": False, "tooltip": "调试输出", "label": "调试输出"}),
             }
         }
     
@@ -34,7 +36,8 @@ class AudioSpeechSegmenter:
     def segment_audio(self, audio, frame_duration, min_speech_duration, max_silence_duration, 
                      aggressiveness, max_segment_duration, min_energy_threshold=0.01, 
                      noise_level_db=-60, noise_reduction=True, adaptive_threshold=True,
-                     resample_rate=16000, debug_output=False):
+                     resample_rate=16000, enable_loudness_normalization=False, target_lufs=-16.0, 
+                     debug_output=False):
         """音频语音分割主方法"""
         # 输入验证
         if "waveform" not in audio or "sample_rate" not in audio:
@@ -61,6 +64,10 @@ class AudioSpeechSegmenter:
             if num_channels > 1:
                 waveform = waveform.mean(dim=1, keepdim=True)
                 num_channels = 1
+            
+            # 应用响度标准化（如果启用）
+            if enable_loudness_normalization:
+                waveform = self.apply_loudness_normalization(waveform, original_sample_rate, target_lufs)
             
             # 重采样为VAD支持的采样率
             if original_sample_rate != resample_rate:
@@ -119,6 +126,10 @@ class AudioSpeechSegmenter:
                     elif seg_waveform.ndim == 1:
                         seg_waveform = seg_waveform.unsqueeze(0).unsqueeze(0)
                     
+                    # 对每个片段应用响度标准化（如果启用）
+                    if enable_loudness_normalization:
+                        seg_waveform = self.apply_loudness_normalization(seg_waveform, original_sample_rate, target_lufs)
+                    
                     segment_tensors.append({
                         "waveform": seg_waveform,
                         "sample_rate": original_sample_rate
@@ -141,6 +152,11 @@ class AudioSpeechSegmenter:
             # 处理没有检测到语音的情况
             if not segment_tensors:
                 empty_waveform = torch.zeros(1, 1, 1)
+                
+                # 对空音频也应用响度标准化（如果启用）
+                if enable_loudness_normalization:
+                    empty_waveform = self.apply_loudness_normalization(empty_waveform, original_sample_rate, target_lufs)
+                
                 segment_tensors = [{"waveform": empty_waveform, "sample_rate": original_sample_rate}]
                 segment_info = [{
                     "index": 0,
@@ -342,6 +358,61 @@ class AudioSpeechSegmenter:
             logger.error(f"VAD检测过程中发生错误: {str(e)}")
             return []
     
+    def apply_loudness_normalization(self, waveform, sample_rate, target_lufs=-16.0):
+        """应用响度标准化"""
+        try:
+            import pyloudnorm
+            
+            # 将tensor转换为numpy数组进行响度测量
+            audio_np = waveform.squeeze().cpu().numpy()
+            
+            # 如果是立体声，转换为二维数组
+            if audio_np.ndim == 1:
+                audio_np = audio_np.reshape(1, -1)
+            else:
+                audio_np = audio_np.T  # 转置为 (samples, channels)
+            
+            # 创建Meter对象，使用K-weighting和gated测量
+            meter = pyloudnorm.Meter(sample_rate, block_size=0.400)  # 400ms gate
+            
+            # 测量LUFS
+            loudness = meter.integrated_loudness(audio_np)
+            
+            # 计算所需的增益
+            gain = target_lufs - loudness
+            
+            # 应用增益
+            if gain != float('-inf') and gain != float('inf'):  # 检查是否为有效数字
+                gain_linear = 10 ** (gain / 20.0)
+                normalized_audio = audio_np * gain_linear
+                
+                # 防止削波 (clipping)
+                max_amplitude = np.max(np.abs(normalized_audio))
+                if max_amplitude > 1.0:
+                    normalized_audio = normalized_audio / max_amplitude
+                
+                # 转换回PyTorch tensor
+                normalized_tensor = torch.from_numpy(normalized_audio.T).unsqueeze(0)  # 重新调整为 (batch, channels, samples)
+                
+                logger.info(f"响度标准化: {loudness:.2f} LUFS -> {target_lufs:.2f} LUFS (增益: {gain:.2f} dB)")
+                
+                return normalized_tensor
+            else:
+                logger.warning("响度测量无效，跳过响度标准化")
+                return waveform
+                
+        except ImportError:
+            logger.warning("pyloudnorm未安装，跳过响度标准化。请运行: pip install pyloudnorm")
+            return waveform
+        except Exception as e:
+            logger.error(f"响度标准化失败: {str(e)}")
+            return waveform
+        finally:
+            # 清理内存
+            import gc
+            gc.collect()
+
+
     def handle_invalid_input(self) -> List[Dict]:
         """处理无效输入，返回空音频片段列表"""
         try:

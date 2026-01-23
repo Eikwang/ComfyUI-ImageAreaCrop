@@ -36,27 +36,51 @@ class AreaCropRestoreNode:
         elif B_cropped > B_target:
             # 情况2: 处理后的图像数量多于目标图像数量，扩展目标图像
             if expand_mode == "repeat":
-                # 重复最后一帧
-                additional_frames = B_cropped - B_target
-                last_frame = target_image[-1:].repeat(additional_frames, 1, 1, 1)
-                expanded_target = torch.cat([target_image, last_frame], dim=0)
-            else:  # pingpong
-                # 首尾循环方式扩展
+                # 重复循环模式: 0,1,2,3,4,0,1,2,3,4,0,1,2,3,4...
                 additional_frames = B_cropped - B_target
                 cycle_length = B_target
-                
-                # 创建pingpong模式的索引序列
-                # 例如，如果有441帧要扩展到496帧，额外需要55帧
-                # pingpong模式: 0,1,2,...,440,440,...,2,1,0,0,1,2,...
-                forward_indices = list(range(B_target))  # 0 to 440
-                backward_indices = list(range(B_target-2, 0, -1))  # 439 to 1 (reversed)
-                
-                pingpong_sequence = forward_indices + backward_indices
-                
-                # 循环使用pingpong序列来获取额外帧
                 extended_frames = []
+                
                 for i in range(additional_frames):
-                    idx = pingpong_sequence[i % len(pingpong_sequence)]
+                    idx = i % cycle_length  # 循环使用原始帧索引
+                    extended_frames.append(target_image[idx:idx+1])
+                
+                if extended_frames:
+                    extended_part = torch.cat(extended_frames, dim=0)
+                    expanded_target = torch.cat([target_image, extended_part], dim=0)
+                else:
+                    expanded_target = target_image
+            else:  # pingpong
+                # 真正的往复循环模式: 0,1,2,3,4,3,2,1,0,1,2,3,4...
+                additional_frames = B_cropped - B_target
+                extended_frames = []
+                
+                # 构建pingpong序列的生成器，从最大索引开始往复
+                def generate_pingpong_sequence():
+                    if B_target == 1:  # 只有1帧的特殊情况
+                        while True:
+                            yield 0
+                    else:
+                        idx = B_target - 1  # 从最后一帧开始
+                        direction = -1  # 从后向前
+                        while True:
+                            yield idx
+                            next_idx = idx + direction
+                            
+                            # 检查是否到达边界，需要改变方向
+                            if next_idx < 0:  # 到达最前，需要转向
+                                direction = 1
+                                next_idx = 1  # 转向后从第1帧开始
+                            elif next_idx >= B_target:  # 到达最后，需要转向
+                                direction = -1
+                                next_idx = B_target - 2  # 转向后从倒数第2帧开始
+                            
+                            idx = next_idx
+                
+                # 生成额外帧的索引
+                pingpong_gen = generate_pingpong_sequence()
+                for i in range(additional_frames):
+                    idx = next(pingpong_gen)
                     extended_frames.append(target_image[idx:idx+1])
                 
                 if extended_frames:

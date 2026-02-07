@@ -36,31 +36,39 @@ class AudioSegmentProcessor:
             return (self._create_empty_audio(),)
         
         try:
-            # 当save_segments开启时，只进行保存操作，忽略selected_index
+            # 当save_segments开启时，执行保存操作
             if save_segments:
                 if merge_segments:
                     # 合并所有音频片段并保存
                     merged_audio = self._merge_audio_segments(audio_segments)
-                    self._save_audio(merged_audio, f"{filename_prefix}_merged.wav")
+                    self._save_audio(merged_audio, f"{filename_prefix}_merged")
+                    
+                    # 输出合并后的完整音频
+                    return (merged_audio,)
                 else:
                     # 保存所有单独的音频片段
                     for i, audio_segment in enumerate(audio_segments):
-                        self._save_audio(audio_segment, f"{filename_prefix}_{i}.wav")
-                
-                # 返回第一个片段作为输出（即使保存了其他内容）
-                if audio_segments:
-                    return (audio_segments[0],)
-                else:
-                    return (self._create_empty_audio(),)
+                        self._save_audio(audio_segment, f"{filename_prefix}", segment_index=i)
+                    
+                    # 返回第一个片段作为输出
+                    if audio_segments:
+                        return (audio_segments[0],)
+                    else:
+                        return (self._create_empty_audio(),)
             else:
-                # 当save_segments关闭时，根据selected_index返回指定片段
-                if selected_index >= len(audio_segments):
-                    logger.warning(f"选定索引 {selected_index} 超出范围，使用最后一个片段")
-                    selected_index = len(audio_segments) - 1
-                
-                selected_audio = audio_segments[selected_index]
-                
-                return (selected_audio,)
+                # 当save_segments关闭时，根据merge_segments决定输出内容
+                if merge_segments:
+                    # 合并所有音频片段并输出
+                    merged_audio = self._merge_audio_segments(audio_segments)
+                    return (merged_audio,)
+                else:
+                    # 根据selected_index返回指定片段
+                    if selected_index >= len(audio_segments):
+                        logger.warning(f"选定索引 {selected_index} 超出范围，使用最后一个片段")
+                        selected_index = len(audio_segments) - 1
+                    
+                    selected_audio = audio_segments[selected_index]
+                    return (selected_audio,)
         
         except Exception as e:
             logger.error(f"处理音频片段时发生错误: {str(e)}")
@@ -133,7 +141,7 @@ class AudioSegmentProcessor:
             logger.error(f"合并音频片段时发生错误: {str(e)}")
             return self._create_empty_audio()
     
-    def _save_audio(self, audio, filename):
+    def _save_audio(self, audio, filename, segment_index=None):
         """保存音频文件"""
         try:
             if "waveform" not in audio or "sample_rate" not in audio:
@@ -158,8 +166,19 @@ class AudioSegmentProcessor:
             audio_output_dir = os.path.join(output_dir, "audio_segments")
             os.makedirs(audio_output_dir, exist_ok=True)
             
+            # 生成唯一文件名（添加时间戳和可选的片段索引）
+            import time
+            import uuid
+            timestamp = int(time.time())
+            unique_id = uuid.uuid4().hex[:8]
+            
+            if segment_index is not None:
+                unique_filename = f"{filename}_{timestamp}_{unique_id}_{segment_index}.wav"
+            else:
+                unique_filename = f"{filename}_{timestamp}_{unique_id}.wav"
+            
             # 完整文件路径
-            filepath = os.path.join(audio_output_dir, filename)
+            filepath = os.path.join(audio_output_dir, unique_filename)
             
             # 保存音频文件
             torchaudio.save(filepath, waveform, sample_rate)
@@ -183,7 +202,19 @@ class AudioSegmentProcessor:
                     output_dir = folder_paths.get_output_directory()
                     audio_output_dir = os.path.join(output_dir, "audio_segments")
                     os.makedirs(audio_output_dir, exist_ok=True)
-                    filepath = os.path.join(audio_output_dir, filename)
+                    
+                    # 生成唯一文件名
+                    import time
+                    import uuid
+                    timestamp = int(time.time())
+                    unique_id = uuid.uuid4().hex[:8]
+                    
+                    if segment_index is not None:
+                        unique_filename = f"{filename}_{timestamp}_{unique_id}_{segment_index}.wav"
+                    else:
+                        unique_filename = f"{filename}_{timestamp}_{unique_id}.wav"
+                    
+                    filepath = os.path.join(audio_output_dir, unique_filename)
                     
                     torchaudio.save(filepath, waveform, sample_rate)
                     logger.info(f"音频已使用归一化方式保存到: {filepath}")
